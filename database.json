@@ -1,0 +1,48 @@
+{
+  "lostItems": [
+    {
+      "id": "meblyoa1mi5op02h4",
+      "status": "found",
+      "itemName": "realme phone",
+      "category": "electronics",
+      "location": "class",
+      "dateLost": "2025-08-14",
+      "timeLost": "",
+      "description": "backside has 4 cameras and colour of mobile is blue",
+      "contact": "7382308700",
+      "reward": "",
+      "type": "lost",
+      "datePosted": "2025-08-14T16:23:00.367Z"
+    },
+    {
+      "id": "meo88rzz953y6zgfr",
+      "status": "active",
+      "itemName": "chain",
+      "category": "jewelry",
+      "location": "lab",
+      "dateLost": "2025-08-23",
+      "timeLost": "",
+      "description": "gold",
+      "contact": "rakeshraparthi1438@gmail.com",
+      "reward": "100",
+      "type": "lost",
+      "datePosted": "2025-08-23T12:19:57.411Z"
+    }
+  ],
+  "foundItems": [
+    {
+      "id": "mebm0jy059d107c6p",
+      "status": "active",
+      "itemName": "realme phone",
+      "category": "electronics",
+      "location": "class",
+      "dateFound": "2025-08-14",
+      "description": "This item was reunited via the portal. Original description: backside has 4 cameras and colour of mobile is blue",
+      "contact": "9346801551",
+      "currentLocation": "with me",
+      "originalLostItemId": "meblyoa1mi5op02h4",
+      "type": "found",
+      "datePosted": "2025-08-14T16:24:28.129Z"
+    }
+  ]
+}

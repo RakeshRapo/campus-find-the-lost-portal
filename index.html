@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Find the Lost Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <i class="fas fa-search-location" aria-hidden="true"></i>
+                <span>Campus Find the Lost</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link active">Home</a></li>
+                <li><a href="#lost" class="nav-link">Report Lost</a></li>
+                <li><a href="#found" class="nav-link">Post Found</a></li>
+                <li><a href="#browse" class="nav-link">Browse Items</a></li>
+                <li><a href="#faq" class="nav-link">FAQ</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <h1>Find What's Lost. Return What's Found.</h1>
+                <p>Welcome to the campus community's official Lost & Found hub. Misplaced something? Found an item? You're in the right place. Let's work together to reconnect lost belongings with their owners.</p>
+                <div class="hero-buttons">
+                    <a href="#lost" id="heroReportLostBtn" class="btn btn-primary">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i> I Lost Something
+                    </a>
+                    <a href="#found" id="heroPostFoundBtn" class="btn btn-secondary">
+                        <i class="fas fa-hand-holding-heart" aria-hidden="true"></i> I Found Something
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <i class="fas fa-search-location" aria-hidden="true"></i>
+            </div>
+        </section>
+
+        <section id="lost" class="section">
+            <div class="container">
+                <h2><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Report a Lost Item</h2>
+                <p>Please tell us about your lost item. Providing clear details like the last-seen location, a good description, and any unique marks is the best way to help others identify and return it to you.</p>
+                
+                <form id="lostForm" class="form">
+                    <div class="form-group">
+                        <label for="lostItemName">Item Name *</label>
+                        <input type="text" id="lostItemName" name="itemName" required placeholder="e.g., Black iPhone 13 Pro">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="lostCategory">Category *</label>
+                            <select id="lostCategory" name="category" required></select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lostLocation">Last Seen Location *</label>
+                            <input type="text" id="lostLocation" name="location" placeholder="e.g., Library 2nd Floor, Main Cafeteria" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="lostDate">Date Lost *</label>
+                            <input type="date" id="lostDate" name="dateLost" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lostTime">Approximate Time</label>
+                            <input type="time" id="lostTime" name="timeLost">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lostDescription">Detailed Description *</label>
+                        <textarea id="lostDescription" name="description" rows="4" placeholder="e.g., Small scratch on the top left corner, has a blue case with a sticker." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lostContact">Your Contact Info *</label>
+                        <input type="text" id="lostContact" name="contact" placeholder="Your phone number or email for finders to reach you" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lostReward">Reward (Optional)</label>
+                        <input type="text" id="lostReward" name="reward" placeholder="e.g., ₹500, A coffee, Eternal gratitude">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane" aria-hidden="true"></i> Submit My Lost Item
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section id="found" class="section">
+            <div class="container">
+                <h2><i class="fas fa-hand-holding-heart" aria-hidden="true"></i> Post a Found Item</h2>
+                <p>Thank you for helping a fellow community member! Please describe the item you found. Your post will help the owner find it.</p>
+                
+                <form id="foundForm" class="form">
+                    <div class="form-group">
+                        <label for="foundItemName">Item Name *</label>
+                        <input type="text" id="foundItemName" name="itemName" required placeholder="e.g., Silver Water Bottle">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="foundCategory">Category *</label>
+                             <select id="foundCategory" name="category" required></select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="foundLocation">Found Location *</label>
+                            <input type="text" id="foundLocation" name="location" placeholder="e.g., Near the main gate, Chemistry Lab" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="foundDate">Date Found *</label>
+                            <input type="date" id="foundDate" name="dateFound" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="foundTime">Time Found</label>
+                            <input type="time" id="foundTime" name="timeFound">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="foundDescription">Description *</label>
+                        <textarea id="foundDescription" name="description" rows="4" placeholder="Describe the item (color, brand, condition, etc.)" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="foundImage">Upload Image (Optional)</label>
+                        <input type="file" id="foundImage" name="image" accept="image/*">
+                        <small>A clear image greatly helps the owner identify their item.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="foundCurrentLocation">Current Item Location *</label>
+                        <input type="text" id="foundCurrentLocation" name="currentLocation" placeholder="e.g., Handed to security, At the front desk" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fas fa-upload" aria-hidden="true"></i> Post the Found Item
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section id="browse" class="section">
+            <div class="container">
+                <h2><i class="fas fa-search" aria-hidden="true"></i> Browse Listings</h2>
+                <p>Look through the listings below to see if your item has been found or if you recognize something that belongs to someone else. Use the search and filters to narrow down the results.</p>
+                
+                <div class="search-filters">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search by item name, description, location...">
+                        <button type="button" id="searchBtn" aria-label="Search">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="filters">
+                        <select id="categoryFilter" aria-label="Filter by Category"></select>
+                        <select id="typeFilter" aria-label="Filter by Type"></select>
+                        <button id="clearFiltersBtn" class="btn btn-outline">Clear Filters</button>
+                        
+                        <button id="cleanupOldItemsBtn" class="btn btn-secondary" style="background: #e74c3c;">
+                            <i class="fas fa-broom" aria-hidden="true"></i> Cleanup Old Items
+                        </button>
+                    </div>
+                <div id="itemsContainer" class="items-grid">
+                    </div>
+                    <h2 style="margin-top: 4rem; text-align: center;">
+                        <i class="fas fa-handshake" aria-hidden="true"></i> Success Stories
+                    </h2>
+                    <div id="historyContainer" class="items-grid">
+                        </div>
+            </div>
+        </section>
+
+        <section id="faq" class="section">
+            <div class="container">
+                <h2><i class="fas fa-question-circle" aria-hidden="true"></i> Frequently Asked Questions</h2>
+                <p style="max-width: 800px; margin: 0 auto 4rem auto;">Here are answers to some common questions. If you need more help, please contact Campus Security.</p>
+                <div class="faq-grid">
+                    <div class="faq-item">
+                        <h4>How long do items stay on the portal?</h4>
+                        <p>Lost items remain active until you mark them as 'found'. Unclaimed found items are automatically cleared from the main view after a few days to keep the listings current, but success stories are kept in a separate section.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>What should I do after I find my item?</h4>
+                        <p>That's great news! Please click the "I Found This!" button on your original lost item post. This moves it to the "Success Stories" section and helps keep the portal organized for everyone.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Is my contact information public?</h4>
+                        <p>Yes, the contact information you provide is visible so that finders or owners can reach you directly. Please only provide information you are comfortable sharing with the campus community.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>What if no one claims an item I found?</h4>
+                        <p>After a reasonable amount of time, we recommend turning the item into the central campus security or administrative office. The system automatically cleans up very old posts to keep the portal focused on active items.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Campus Find the Lost</h3>
+                    <p>Connecting our community, one found item at a time.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#lost">Report Lost</a></li>
+                        <li><a href="#found">Post Found</a></li>
+                        <li><a href="#browse">Browse Items</a></li>
+                        <li><a href="#faq">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <address>
+                        Campus Security<br>
+                        Visakhapatnam, Andhra Pradesh<br>
+                        Email: <a href="mailto:support@campusfind.example.com">support@campusfind.example.com</a>
+                    </address>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Campus Find the Lost. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="markAsFoundModal" class="modal">
+        <div class="modal-content">
+            <button class="close" id="closeMarkAsFoundModal" aria-label="Close">&times;</button>
+            <h3>You Found an Item!</h3>
+            <p>That's great news. Please provide your contact details so the owner can get in touch with you.</p>
+            <form id="markAsFoundForm" class="form" style="padding: 2rem 0; box-shadow: none; border: none; background: transparent;">
+                <input type="hidden" id="markAsFoundItemId">
+                <div class="form-group">
+                    <label for="finderContact">Your Contact Info (Phone/Email)</label>
+                    <input type="text" id="finderContact" required placeholder="e.g., yourname@email.com or 98XXXXXX01">
+                </div>
+                <div class="form-group">
+                    <label for="finderLocation">Current Location of the Item</label>
+                    <input type="text" id="finderLocation" required placeholder="e.g., Security Office, Library Front Desk">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit & Notify Owner</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <button class="close" id="closeSuccessModal" aria-label="Close">&times;</button>
+            <i class="fas fa-check-circle success-icon" aria-hidden="true"></i>
+            <h3>Success!</h3>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
