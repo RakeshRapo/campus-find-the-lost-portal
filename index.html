@@ -260,19 +260,47 @@
     <div id="markAsFoundModal" class="modal">
         <div class="modal-content">
             <button class="close" id="closeMarkAsFoundModal" aria-label="Close">&times;</button>
-            <h3>You Found an Item!</h3>
-            <p>That's great news. Please provide your contact details so the owner can get in touch with you.</p>
+            <h3>🎉 You Found an Item!</h3>
+            <p>That's wonderful! Please provide your details so the owner can get in touch with you and arrange pickup.</p>
             <form id="markAsFoundForm" class="form" style="padding: 2rem 0; box-shadow: none; border: none; background: transparent;">
                 <input type="hidden" id="markAsFoundItemId">
+                
                 <div class="form-group">
-                    <label for="finderContact">Your Contact Info (Phone/Email)</label>
+                    <label for="finderName">Your Name *</label>
+                    <input type="text" id="finderName" required placeholder="e.g., John Doe">
+                </div>
+                
+                <div class="form-group">
+                    <label for="finderContact">Your Contact Info *</label>
                     <input type="text" id="finderContact" required placeholder="e.g., yourname@email.com or 98XXXXXX01">
+                    <small>This will be shared with the item owner</small>
                 </div>
+                
                 <div class="form-group">
-                    <label for="finderLocation">Current Location of the Item</label>
-                    <input type="text" id="finderLocation" required placeholder="e.g., Security Office, Library Front Desk">
+                    <label for="finderLocation">Current Location of the Item *</label>
+                    <input type="text" id="finderLocation" required placeholder="e.g., Security Office, Library Front Desk, Room 201">
+                    <small>Where can the owner pick up the item?</small>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit & Notify Owner</button>
+                
+                <div class="form-group">
+                    <label for="finderNotes">Additional Notes</label>
+                    <textarea id="finderNotes" rows="3" placeholder="Any additional details about the item's condition, pickup time, or special instructions..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pickupTime">Preferred Pickup Time</label>
+                    <select id="pickupTime">
+                        <option value="">Select preferred time</option>
+                        <option value="morning">Morning (8 AM - 12 PM)</option>
+                        <option value="afternoon">Afternoon (12 PM - 4 PM)</option>
+                        <option value="evening">Evening (4 PM - 8 PM)</option>
+                        <option value="anytime">Anytime</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-bell" aria-hidden="true"></i> Submit & Notify Owner
+                </button>
             </form>
         </div>
     </div>
@@ -283,6 +311,51 @@
             <i class="fas fa-check-circle success-icon" aria-hidden="true"></i>
             <h3>Success!</h3>
             <p id="modalMessage"></p>
+        </div>
+    </div>
+    
+    <div id="itemReunitedModal" class="modal">
+        <div class="modal-content">
+            <button class="close" id="closeItemReunitedModal" aria-label="Close">&times;</button>
+            <div class="reunion-header">
+                <i class="fas fa-heart reunion-icon" aria-hidden="true"></i>
+                <h3>🎉 Item Reunited!</h3>
+            </div>
+            <div id="reunionDetails">
+                <p><strong>Great news!</strong> Your item has been found and is ready for pickup.</p>
+                
+                <div class="finder-info">
+                    <h4>Finder's Details:</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <strong>Name:</strong> <span id="reunionFinderName"></span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Contact:</strong> <span id="reunionFinderContact"></span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Item Location:</strong> <span id="reunionItemLocation"></span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Pickup Time:</strong> <span id="reunionPickupTime"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="notes-section" id="reunionNotesSection" style="display: none;">
+                        <h4>Additional Notes:</h4>
+                        <p id="reunionNotes"></p>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-success" onclick="contactFinder()">
+                        <i class="fas fa-phone" aria-hidden="true"></i> Contact Finder
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeReunionModal()">
+                        <i class="fas fa-check" aria-hidden="true"></i> Got It
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     
