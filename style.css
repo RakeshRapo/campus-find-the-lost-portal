@@ -277,14 +277,15 @@ body::before {
     box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
 }
 
+
 .btn-secondary {
-    background: linear-gradient(135deg, #f093fb, #f5576c);
-    color: white;
+   background: linear-gradient(135deg, #28a745, #218838);
+   color: white;
 }
 
 .btn-secondary:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 20px 40px rgba(240, 147, 251, 0.4);
+   transform: translateY(-5px) scale(1.05);
+   box-shadow: 0 20px 40px rgba(40, 167, 69, 0.4);
 }
 
 .btn-outline {
@@ -1336,5 +1337,6 @@ select option {
     margin-right: 0.5rem;
     color: #f39c12;
 }
+
 
 
