@@ -33,14 +33,16 @@ async function initializeExcelDatabase() {
         // Define headers for lost items
         const lostItemsHeaders = [
             'id', 'status', 'itemName', 'category', 'location', 'dateLost', 
-            'timeLost', 'description', 'contact', 'reward', 'type', 'datePosted'
+            'timeLost', 'description', 'contact', 'reward', 'type', 'datePosted',
+            'dateFound', 'finderDetails'
         ];
         
         // Define headers for found items
         const foundItemsHeaders = [
             'id', 'status', 'itemName', 'category', 'location', 'dateFound', 
             'description', 'contact', 'currentLocation', 'originalLostItemId', 
-            'type', 'datePosted'
+            'type', 'datePosted', 'finderName', 'finderNotes', 'pickupTime', 
+            'reunionDate'
         ];
         
         // Create empty sheets with headers
@@ -109,13 +111,15 @@ async function writeExcelDatabase(data) {
         // Convert lost items to array format
         const lostItemsHeaders = [
             'id', 'status', 'itemName', 'category', 'location', 'dateLost', 
-            'timeLost', 'description', 'contact', 'reward', 'type', 'datePosted'
+            'timeLost', 'description', 'contact', 'reward', 'type', 'datePosted',
+            'dateFound', 'finderDetails'
         ];
         
         const foundItemsHeaders = [
             'id', 'status', 'itemName', 'category', 'location', 'dateFound', 
             'description', 'contact', 'currentLocation', 'originalLostItemId', 
-            'type', 'datePosted'
+            'type', 'datePosted', 'finderName', 'finderNotes', 'pickupTime', 
+            'reunionDate'
         ];
         
         // Convert lost items to rows
@@ -204,7 +208,7 @@ app.post('/api/items/found', async (req, res) => {
 // PUT /api/items/:type/:id - Update an item's status
 app.put('/api/items/:type/:id', async (req, res) => {
     const { type, id } = req.params;
-    const { status } = req.body;
+    const { status, finderDetails } = req.body;
 
     if (!status) {
         return res.status(400).json({ message: 'Status is required for an update.' });
@@ -219,6 +223,22 @@ app.put('/api/items/:type/:id', async (req, res) => {
 
         if (itemIndex !== -1) {
             itemCollection[itemIndex].status = status;
+            
+            // Store finder details if provided (when marking as found)
+            if (finderDetails && status === 'found') {
+                itemCollection[itemIndex].finderDetails = {
+                    name: finderDetails.name || '',
+                    contact: finderDetails.contact || '',
+                    location: finderDetails.location || '',
+                    notes: finderDetails.notes || '',
+                    pickupTime: finderDetails.pickupTime || '',
+                    reunionDate: finderDetails.reunionDate || new Date().toISOString()
+                };
+                
+                // Also update the date when it was found
+                itemCollection[itemIndex].dateFound = new Date().toISOString().split('T')[0];
+            }
+            
             itemFound = true;
         }
 
