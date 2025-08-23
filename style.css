@@ -1237,7 +1237,7 @@ select option {
     background: #218838;
 }
 
-.btn-secondary {
+.btn-modal-close {
     background: #6c757d;
     color: white;
     border: none;
@@ -1248,7 +1248,7 @@ select option {
     transition: background-color 0.3s;
 }
 
-.btn-secondary:hover {
+.btn-modal-close:hover {
     background: #5a6268;
 }
 
@@ -1336,4 +1336,5 @@ select option {
     margin-right: 0.5rem;
     color: #f39c12;
 }
+
 
