@@ -94,7 +94,12 @@ async function loadItemsAndRender() {
     state.allItems = activeItems;
 
     renderItems(activeItems, DOMElements.itemsContainer);
-    renderItems(resolvedItems, DOMElements.historyContainer);
+    
+    // Auto-cleanup success stories older than 2 weeks
+    autoCleanupSuccessStories();
+    
+    // Render enhanced success stories
+    renderSuccessStories();
 }
 
 
@@ -108,11 +113,13 @@ function setupEventListeners() {
 
     DOMElements.closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
     DOMElements.closeMarkAsFoundModalBtn.addEventListener('click', closeMarkAsFoundModal);
+    document.getElementById('closeItemReunitedModal').addEventListener('click', closeReunionModal);
     DOMElements.markAsFoundForm.addEventListener('submit', handleMarkAsFoundSubmit);
     window.addEventListener('click', (event) => {
         if (event.target.classList.contains('modal')) {
             closeSuccessModal();
             closeMarkAsFoundModal();
+            closeReunionModal();
         }
     });
 
@@ -189,23 +196,32 @@ async function handleFoundForm(event) {
 }
 
 /**
- * Handles marking a lost item as found, with improved error checking.
+ * Handles marking a lost item as found, with comprehensive finder details and notification system.
  */
 async function handleMarkAsFoundSubmit(event) {
     event.preventDefault();
     const itemId = DOMElements.markAsFoundItemIdInput.value;
     
-    // Diagnostic log to see what's happening
-    console.log("Attempting to mark item as found. ID:", itemId);
+    // Collect comprehensive finder details
+    const finderName = document.getElementById('finderName').value.trim();
+    const finderContact = document.getElementById('finderContact').value.trim();
+    const finderLocation = document.getElementById('finderLocation').value.trim();
+    const finderNotes = document.getElementById('finderNotes').value.trim();
+    const pickupTime = document.getElementById('pickupTime').value;
+    
+    // Validate required fields
+    if (!finderName || !finderContact || !finderLocation) {
+        alert('Please fill in all required fields (Name, Contact, and Location).');
+        return;
+    }
 
     // Find the item in the current state
     const lostItem = state.lostItems.find(item => item.id === itemId);
 
-    // THIS IS THE CRUCIAL FIX: If the item isn't found, show an error instead of stopping silently.
     if (!lostItem) {
-        console.error("CRITICAL ERROR: Could not find lost item with ID:", itemId, "in the current state. The state might be out of sync.");
+        console.error("CRITICAL ERROR: Could not find lost item with ID:", itemId, "in the current state.");
         alert("An error occurred. Could not find the item to update. Please refresh the page and try again.");
-        return; // Stop the function here
+        return;
     }
 
     const foundItemData = {
@@ -214,11 +230,17 @@ async function handleMarkAsFoundSubmit(event) {
         location: lostItem.location,
         dateFound: new Date().toISOString().split('T')[0],
         description: `This item was reunited via the portal. Original description: ${lostItem.description}`,
-        contact: DOMElements.finderContactInput.value,
-        currentLocation: DOMElements.finderLocationInput.value,
+        contact: finderContact,
+        currentLocation: finderLocation,
         originalLostItemId: lostItem.id,
         type: 'found',
         datePosted: new Date().toISOString(),
+        // Enhanced finder details
+        finderName: finderName,
+        finderNotes: finderNotes,
+        pickupTime: pickupTime,
+        reunionDate: new Date().toISOString(),
+        status: 'reunited'
     };
 
     try {
@@ -228,7 +250,17 @@ async function handleMarkAsFoundSubmit(event) {
             fetch(`/api/items/lost/${itemId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'found' }),
+                body: JSON.stringify({ 
+                    status: 'found',
+                    finderDetails: {
+                        name: finderName,
+                        contact: finderContact,
+                        location: finderLocation,
+                        notes: finderNotes,
+                        pickupTime: pickupTime,
+                        reunionDate: new Date().toISOString()
+                    }
+                }),
             }),
             // 2. Create a new 'found' record linked to the original
             fetch('/api/items/found', {
@@ -239,8 +271,12 @@ async function handleMarkAsFoundSubmit(event) {
         ]);
 
         closeMarkAsFoundModal();
+        
+        // Show reunion notification modal
+        showReunionNotification(lostItem, finderName, finderContact, finderLocation, pickupTime, finderNotes);
+        
         await loadItemsAndRender();
-        showSuccessModal(`🎉 Item successfully marked as found!`);
+        showSuccessModal(`🎉 Item successfully marked as found! Owner has been notified.`);
     } catch (error) {
         console.error('Error sending update to server:', error);
         alert('Could not contact the server to update the item. Please check your connection.');
@@ -483,3 +519,135 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+
+// --- NOTIFICATION SYSTEM ---
+function showReunionNotification(lostItem, finderName, finderContact, finderLocation, pickupTime, finderNotes) {
+    // Populate the reunion modal with finder details
+    document.getElementById('reunionFinderName').textContent = finderName;
+    document.getElementById('reunionFinderContact').textContent = finderContact;
+    document.getElementById('reunionItemLocation').textContent = finderLocation;
+    document.getElementById('reunionPickupTime').textContent = pickupTime || 'Not specified';
+    
+    // Show notes if available
+    const notesSection = document.getElementById('reunionNotesSection');
+    const notesElement = document.getElementById('reunionNotes');
+    if (finderNotes && finderNotes.trim()) {
+        notesElement.textContent = finderNotes;
+        notesSection.style.display = 'block';
+    } else {
+        notesSection.style.display = 'none';
+    }
+    
+    // Show the reunion notification modal
+    document.getElementById('itemReunitedModal').style.display = 'block';
+}
+
+function closeReunionModal() {
+    document.getElementById('itemReunitedModal').style.display = 'none';
+}
+
+function contactFinder() {
+    // This function can be enhanced to show contact options
+    // For now, it just shows the contact information
+    const contact = document.getElementById('reunionFinderContact').textContent;
+    const name = document.getElementById('reunionFinderName').textContent;
+    
+    if (contact.includes('@')) {
+        // Email contact
+        window.open(`mailto:${contact}?subject=Re: Found Item - ${name}`);
+    } else if (contact.match(/\d/)) {
+        // Phone contact
+        alert(`Call or message: ${contact}\n\nFinder: ${name}`);
+    } else {
+        alert(`Contact: ${contact}\n\nFinder: ${name}`);
+    }
+}
+
+// --- AUTO-CLEANUP SYSTEM ---
+/**
+ * Automatically removes success stories older than 2 weeks
+ * Data remains in backend but is hidden from frontend
+ */
+function autoCleanupSuccessStories() {
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14); // 2 weeks ago
+    
+    // Filter out old success stories
+    state.foundItems = state.foundItems.filter(item => {
+        if (item.status === 'reunited' && item.reunionDate) {
+            const reunionDate = new Date(item.reunionDate);
+            return reunionDate > twoWeeksAgo;
+        }
+        return true; // Keep non-reunited items
+    });
+    
+    // Update the display
+    renderItems(state.foundItems, DOMElements.foundItemsContainer);
+    renderSuccessStories();
+}
+
+/**
+ * Renders success stories with enhanced styling and auto-cleanup
+ */
+function renderSuccessStories() {
+    const historyContainer = document.getElementById('historyContainer');
+    if (!historyContainer) return;
+    
+    const reunitedItems = state.foundItems.filter(item => item.status === 'reunited');
+    
+    if (reunitedItems.length === 0) {
+        historyContainer.innerHTML = `
+            <div class="no-items">
+                <i class="fas fa-heart"></i>
+                <h3>No Success Stories Yet</h3>
+                <p>Be the first to help reunite someone with their lost item!</p>
+            </div>`;
+        return;
+    }
+    
+    // Add cleanup notice
+    const cleanupNotice = `
+        <div class="cleanup-notice">
+            <i class="fas fa-info-circle"></i>
+            <strong>Note:</strong> Success stories are automatically hidden after 2 weeks to keep the portal focused on active items. All data is preserved in our records.
+        </div>
+    `;
+    
+    const successStoriesHTML = reunitedItems.map(item => {
+        const reunionDate = item.reunionDate ? new Date(item.reunionDate) : new Date();
+        const formattedDate = reunionDate.toLocaleDateString('en-IN', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        return `
+            <div class="success-story">
+                <h4>
+                    <i class="fas fa-check-circle" aria-hidden="true"></i>
+                    ${item.itemName} - Reunited!
+                </h4>
+                <div class="reunion-date">
+                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                    Reunited on: ${formattedDate}
+                </div>
+                <p><strong>Category:</strong> ${item.category}</p>
+                <p><strong>Original Location:</strong> ${item.location}</p>
+                <p><strong>Description:</strong> ${item.description}</p>
+                
+                <div class="finder-details">
+                    <h5><i class="fas fa-user" aria-hidden="true"></i> Found By:</h5>
+                    <p><strong>Name:</strong> ${item.finderName || 'Not provided'}</p>
+                    <p><strong>Contact:</strong> ${item.contact}</p>
+                    <p><strong>Pickup Location:</strong> ${item.currentLocation}</p>
+                    ${item.pickupTime ? `<p><strong>Preferred Time:</strong> ${item.pickupTime}</p>` : ''}
+                    ${item.finderNotes ? `<p><strong>Notes:</strong> ${item.finderNotes}</p>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    historyContainer.innerHTML = cleanupNotice + successStoriesHTML;
+}
+
+// --- ENHANCED RENDERING ---
