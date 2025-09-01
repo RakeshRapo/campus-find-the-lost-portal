@@ -276,15 +276,17 @@ body::before {
     transform: translateY(-5px) scale(1.05);
     box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
 }
-
+/* --- ALTERNATIVE BUTTON STYLE --- */
 
 .btn-secondary {
+    /* A clean, positive green gradient */
    background: linear-gradient(135deg, #28a745, #218838);
    color: white;
 }
 
 .btn-secondary:hover {
    transform: translateY(-5px) scale(1.05);
+    /* Update the shadow to a matching green glow */
    box-shadow: 0 20px 40px rgba(40, 167, 69, 0.4);
 }
 
@@ -872,7 +874,7 @@ select option {
     position: relative;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
-    overflow-y: auto; 
+    overflow-y: auto; /* Fixes scrolling */
     max-height: 85vh;
 }
 
@@ -1338,5 +1340,195 @@ select option {
     color: #f39c12;
 }
 
+/* Contact Information Modal Styles */
+.contact-details {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 4px solid #007bff;
+}
 
+.contact-details p {
+    margin: 0.5rem 0;
+    color: #495057;
+}
 
+.contact-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.contact-actions .btn {
+    flex: 1;
+    min-width: 150px;
+}
+
+.no-email {
+    color: #dc3545;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+    background: #f8d7da;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+/* Owner Notification Modal Styles */
+.notification-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.notification-icon {
+    font-size: 3rem;
+    color: #28a745;
+    margin-bottom: 1rem;
+    animation: bellRing 2s ease-in-out infinite;
+}
+
+@keyframes bellRing {
+    0%, 100% { transform: rotate(0deg); }
+    10%, 30%, 50%, 70%, 90% { transform: rotate(10deg); }
+    20%, 40%, 60%, 80% { transform: rotate(-10deg); }
+}
+
+.notification-content {
+    text-align: center;
+}
+
+.notification-content p {
+    margin: 0.5rem 0;
+    color: #495057;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 1rem;
+    margin: 2rem 0;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.notification-actions .btn {
+    min-width: 200px;
+}
+
+.notification-tip {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    color: #0056b3;
+    font-size: 0.9rem;
+}
+
+.notification-tip i {
+    margin-right: 0.5rem;
+    color: #007bff;
+}
+
+/* Enhanced Contact Button Styles */
+.btn-contact {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.btn-contact:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.btn-contact:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3);
+}
+
+/* Claim Button Styles */
+.btn-claim {
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.btn-claim:hover {
+    background: linear-gradient(135deg, #f7931e, #ff6b35);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+}
+
+.btn-claim:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(255, 107, 53, 0.3);
+}
+
+/* Claim Details Styles */
+.claim-details {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 4px solid #ff6b35;
+}
+
+.claim-details h4 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.claim-details p {
+    margin: 0.5rem 0;
+    color: #495057;
+    line-height: 1.4;
+}
+
+/* Responsive Design for Contact Features */
+@media (max-width: 768px) {
+    .contact-actions {
+        flex-direction: column;
+    }
+    
+    .contact-actions .btn {
+        min-width: 100%;
+    }
+    
+    .notification-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .notification-actions .btn {
+        min-width: 250px;
+    }
+    
+    .notification-tip {
+        font-size: 0.8rem;
+        padding: 0.75rem;
+    }
+}
