@@ -93,8 +93,9 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="lostContact">Your Contact Info *</label>
-                        <input type="text" id="lostContact" name="contact" placeholder="Your phone number or email for finders to reach you" required>
+                        <label for="lostContact">Your Email Address *</label>
+                        <input type="email" id="lostContact" name="contact" placeholder="your.email@example.com" required>
+                        <small>For safety, please provide your email address. This will be shared with finders to contact you.</small>
                     </div>
                     
                     <div class="form-group">
@@ -213,8 +214,8 @@
                         <p>That's great news! Please click the "I Found This!" button on your original lost item post. This moves it to the "Success Stories" section and helps keep the portal organized for everyone.</p>
                     </div>
                     <div class="faq-item">
-                        <h4>Is my contact information public?</h4>
-                        <p>Yes, the contact information you provide is visible so that finders or owners can reach you directly. Please only provide information you are comfortable sharing with the campus community.</p>
+                        <h4>Is my email address public?</h4>
+                        <p>Yes, the email address you provide is visible so that finders or owners can reach you directly. For your safety, we only accept email addresses, not phone numbers. Please only provide an email you are comfortable sharing with the campus community.</p>
                     </div>
                     <div class="faq-item">
                         <h4>What if no one claims an item I found?</h4>
@@ -247,7 +248,7 @@
                     <address>
                         Campus Security<br>
                         Visakhapatnam, Andhra Pradesh<br>
-                        Email: <a href="mailto:support@campusfind.example.com">support@campusfind.example.com</a>
+                        Email: <a href="mailto:campusfindthelost@gmail.com">campusfindthelost@gmail.com</a>
                     </address>
                 </div>
             </div>
@@ -271,9 +272,9 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="finderContact">Your Contact Info *</label>
-                    <input type="text" id="finderContact" required placeholder="e.g., yourname@email.com or 98XXXXXX01">
-                    <small>This will be shared with the item owner</small>
+                    <label for="finderContact">Your Email Address *</label>
+                    <input type="email" id="finderContact" required placeholder="your.email@example.com">
+                    <small>For safety, please provide your email address. This will be shared with the item owner.</small>
                 </div>
                 
                 <div class="form-group">
@@ -358,8 +359,56 @@
             </div>
         </div>
     </div>
+
+    <div id="claimItemModal" class="modal">
+        <div class="modal-content">
+            <button class="close" id="closeClaimItemModal" aria-label="Close">&times;</button>
+            <h3>🔍 Claim This Item</h3>
+            <p>Please provide details to prove this item belongs to you. The finder will be notified and can verify your claim.</p>
+            <form id="claimItemForm" class="form" style="padding: 2rem 0; box-shadow: none; border: none; background: transparent;">
+                <input type="hidden" id="claimItemId">
+                
+                <div class="form-group">
+                    <label for="claimerName">Your Name *</label>
+                    <input type="text" id="claimerName" required placeholder="e.g., John Doe">
+                </div>
+                
+                <div class="form-group">
+                    <label for="claimerEmail">Your Email Address *</label>
+                    <input type="email" id="claimerEmail" required placeholder="your.email@example.com">
+                    <small>This will be shared with the finder to arrange pickup.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="claimDescription">Describe the Item *</label>
+                    <textarea id="claimDescription" rows="4" required placeholder="Please provide specific details about the item to prove ownership (e.g., brand, color, size, unique features, damage marks, etc.)"></textarea>
+                    <small>Be as specific as possible to help the finder verify your claim.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="claimLocation">Where Did You Lose It? *</label>
+                    <input type="text" id="claimLocation" required placeholder="e.g., Library, Cafeteria, Room 201, Parking Lot">
+                    <small>This helps verify your claim.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="claimDate">When Did You Lose It? *</label>
+                    <input type="date" id="claimDate" required>
+                    <small>Approximate date when you lost the item.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="claimNotes">Additional Proof (Optional)</label>
+                    <textarea id="claimNotes" rows="3" placeholder="Any additional information that could help prove ownership (e.g., receipts, photos, unique identifiers)"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-hand-paper" aria-hidden="true"></i> Submit Claim
+                </button>
+            </form>
+        </div>
+    </div>
     
     <script src="script.js"></script>
 </body>
 </html>
-
