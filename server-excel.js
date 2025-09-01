@@ -16,19 +16,57 @@ app.use(express.static(path.join(__dirname, '.')));
 // Excel file path
 const EXCEL_FILE = path.join(__dirname, 'lost_found_items.xlsx');
 
-// Email configuration
+const nodemailer = require("nodemailer");
+const sgMail = require("@sendgrid/mail");
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 const emailConfig = {
-  host: 'smtp.sendgrid.net',
-    port: 587,
-    secure: false, // TLS is used, so secure is false
-    auth: {
-        user: 'apikey', // The username for SendGrid is always 'apikey'
-        pass: process.env.SENDGRID_API_KEY
-    }
+  host: "smtp.sendgrid.net",
+  port: 587,
+  secure: false,
+  auth: {
+    user: "apikey", // Always this string
+    pass: process.env.SENDGRID_API_KEY,
+  },
 };
 
-// Create email transporter
 const transporter = nodemailer.createTransport(emailConfig);
+
+async function sendEmail(to, subject, htmlContent) {
+  const mailOptions = {
+    from: "campusfindthelost@gmail.com", // must be verified in SendGrid
+    to,
+    subject,
+    html: htmlContent,
+  };
+
+  try {
+    // Try SMTP first
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Email sent via SMTP:", info.messageId);
+    return true;
+  } catch (error) {
+    console.error("❌ SMTP failed:", error.message);
+
+    try {
+      // Fallback to Web API
+      await sgMail.send({
+        to,
+        from: "campusfindthelost@gmail.com", // must be verified in SendGrid
+        subject,
+        html: htmlContent,
+      });
+
+      console.log("✅ Email sent via SendGrid Web API");
+      return true;
+    } catch (apiError) {
+      console.error("❌ SendGrid API failed:", apiError.message);
+      return false;
+    }
+  }
+}
+
 
 // Email helper functions
 async function sendEmail(to, subject, htmlContent) {
@@ -705,6 +743,7 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+
 
 
 
