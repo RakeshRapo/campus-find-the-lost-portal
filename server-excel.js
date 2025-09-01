@@ -18,10 +18,12 @@ const EXCEL_FILE = path.join(__dirname, 'lost_found_items.xlsx');
 
 // Email configuration
 const emailConfig = {
-    service: 'gmail', // You can change this to your email service
+    host: 'smtp.sendgrid.net', // Or the host of your chosen service
+    port: 587, // Or the port of your chosen service
+    secure: false, // Use 'true' if the service requires SSL
     auth: {
-        user: process.env.EMAIL_USER , // Set this in environment variables
-        pass: process.env.EMAIL_PASS  // Set this in environment variables
+        user: 'apikey', // The username is typically 'apikey' for SendGrid
+        pass: process.env.EMAIL_PASS // The API key
     }
 };
 
@@ -703,4 +705,5 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+
 
