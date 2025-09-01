@@ -20,8 +20,8 @@ const EXCEL_FILE = path.join(__dirname, 'lost_found_items.xlsx');
 const emailConfig = {
     service: 'gmail', // You can change this to your email service
     auth: {
-        user: process.env.EMAIL_USER || 'campusfindthelost@gmail.com', // Set this in environment variables
-        pass: process.env.EMAIL_PASS || 'wdry stcu smtt rola' // Set this in environment variables
+        user: process.env.EMAIL_USER , // Set this in environment variables
+        pass: process.env.EMAIL_PASS  // Set this in environment variables
     }
 };
 
@@ -703,3 +703,4 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+
