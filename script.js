@@ -114,7 +114,9 @@ function setupEventListeners() {
     DOMElements.closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
     DOMElements.closeMarkAsFoundModalBtn.addEventListener('click', closeMarkAsFoundModal);
     document.getElementById('closeItemReunitedModal').addEventListener('click', closeReunionModal);
+    document.getElementById('closeClaimItemModal').addEventListener('click', closeClaimItemModal);
     DOMElements.markAsFoundForm.addEventListener('submit', handleMarkAsFoundSubmit);
+    document.getElementById('claimItemForm').addEventListener('submit', handleClaimItemSubmit);
     window.addEventListener('click', (event) => {
         if (event.target.classList.contains('modal')) {
             closeSuccessModal();
@@ -215,6 +217,13 @@ async function handleMarkAsFoundSubmit(event) {
         return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(finderContact)) {
+        alert('Please enter a valid email address.');
+        return;
+    }
+
     // Find the item in the current state
     const lostItem = state.lostItems.find(item => item.id === itemId);
 
@@ -224,51 +233,27 @@ async function handleMarkAsFoundSubmit(event) {
         return;
     }
 
-    const foundItemData = {
-        itemName: lostItem.itemName,
-        category: lostItem.category,
-        location: lostItem.location,
-        dateFound: new Date().toISOString().split('T')[0],
-        description: `This item was reunited via the portal. Original description: ${lostItem.description}`,
-        contact: finderContact,
-        currentLocation: finderLocation,
-        originalLostItemId: lostItem.id,
-        type: 'found',
-        datePosted: new Date().toISOString(),
-        // Enhanced finder details
-        finderName: finderName,
-        finderNotes: finderNotes,
-        pickupTime: pickupTime,
-        reunionDate: new Date().toISOString(),
-        status: 'reunited'
-    };
-
     try {
-        // Promise.all ensures both actions must succeed
-        await Promise.all([
-            // 1. Update the original lost item's status to 'found'
-            fetch(`/api/items/lost/${itemId}`, {
-                method: 'PUT',
+        // Use the new API endpoint to save finder details to Excel
+        const response = await fetch('/api/finder-details', {
+            method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    status: 'found',
-                    finderDetails: {
-                        name: finderName,
-                        contact: finderContact,
-                        location: finderLocation,
-                        notes: finderNotes,
-                        pickupTime: pickupTime,
-                        reunionDate: new Date().toISOString()
-                    }
-                }),
+                itemId: itemId,
+                finderName: finderName,
+                finderContact: finderContact,
+                finderLocation: finderLocation,
+                finderNotes: finderNotes,
+                pickupTime: pickupTime
             }),
-            // 2. Create a new 'found' record linked to the original
-            fetch('/api/items/found', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(foundItemData),
-            })
-        ]);
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save finder details');
+        }
+
+        const result = await response.json();
+        console.log('Finder details saved successfully:', result);
 
         closeMarkAsFoundModal();
         
@@ -276,10 +261,87 @@ async function handleMarkAsFoundSubmit(event) {
         showReunionNotification(lostItem, finderName, finderContact, finderLocation, pickupTime, finderNotes);
         
         await loadItemsAndRender();
-        showSuccessModal(`🎉 Item successfully marked as found! Owner has been notified.`);
+        showSuccessModal(`🎉 Item successfully marked as found! Finder details have been saved to the Excel database.`);
+        
+        // Show notification to the original owner
+        showOwnerNotification(lostItem, finderName, finderContact, finderLocation);
     } catch (error) {
-        console.error('Error sending update to server:', error);
-        alert('Could not contact the server to update the item. Please check your connection.');
+        console.error('Error saving finder details:', error);
+        alert('Could not save finder details to the database. Please check your connection and try again.');
+    }
+}
+
+/**
+ * Handles the submission of item claims by users who believe the item belongs to them.
+ */
+async function handleClaimItemSubmit(event) {
+    event.preventDefault();
+    const itemId = document.getElementById('claimItemId').value;
+    
+    // Collect claim details
+    const claimerName = document.getElementById('claimerName').value.trim();
+    const claimerEmail = document.getElementById('claimerEmail').value.trim();
+    const claimDescription = document.getElementById('claimDescription').value.trim();
+    const claimLocation = document.getElementById('claimLocation').value.trim();
+    const claimDate = document.getElementById('claimDate').value;
+    const claimNotes = document.getElementById('claimNotes').value.trim();
+    
+    // Validate required fields
+    if (!claimerName || !claimerEmail || !claimDescription || !claimLocation || !claimDate) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(claimerEmail)) {
+        alert('Please enter a valid email address.');
+        return;
+    }
+
+    // Find the found item in the current state
+    const foundItem = state.foundItems.find(item => item.id === itemId);
+
+    if (!foundItem) {
+        console.error("CRITICAL ERROR: Could not find item with ID:", itemId, "in the current state.");
+        alert("An error occurred. Could not find the item to claim. Please refresh the page and try again.");
+        return;
+    }
+
+    try {
+        // Use the new API endpoint to save claim details
+        const response = await fetch('/api/item-claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                itemId: itemId,
+                claimerName: claimerName,
+                claimerEmail: claimerEmail,
+                claimDescription: claimDescription,
+                claimLocation: claimLocation,
+                claimDate: claimDate,
+                claimNotes: claimNotes
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to submit claim');
+        }
+
+        const result = await response.json();
+        console.log('Claim submitted successfully:', result);
+
+        closeClaimItemModal();
+        
+        // Show claim notification modal
+        showClaimNotification(foundItem, claimerName, claimerEmail, claimDescription, claimLocation, claimDate);
+        
+        await loadItemsAndRender();
+        showSuccessModal(`🎉 Claim submitted successfully! The finder will be notified and can verify your claim.`);
+        
+    } catch (error) {
+        console.error('Error submitting claim:', error);
+        alert('Could not submit your claim. Please check your connection and try again.');
     }
 }
 
@@ -366,7 +428,20 @@ function createItemCardHTML(item) {
             </div>
             <div class="item-actions">
                 ${isLost && item.status !== 'found' ? `<button class="btn-contact" onclick="openMarkAsFoundModal('${item.id}')">I Found This!</button>` : ''}
+                ${isLost && item.status === 'found' ? `<button class="btn-contact" onclick="contactFinderFromItem('${item.id}')">Contact Finder</button>` : ''}
+                ${!isLost && item.status !== 'claimed' ? `<button class="btn-claim" onclick="openClaimItemModal('${item.id}')">This Belongs to Me!</button>` : ''}
             </div>
+            ${isLost && item.status === 'found' && item.finderDetails ? `
+            <div class="finder-info-display" style="margin-top: 1rem; padding: 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 10px; border-left: 4px solid #667eea;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #667eea; font-size: 0.9rem;">📞 Finder Information</h4>
+                <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.8);">
+                    <p style="margin: 0.25rem 0;"><strong>Name:</strong> ${item.finderDetails.name || 'Not provided'}</p>
+                    <p style="margin: 0.25rem 0;"><strong>Contact:</strong> ${item.finderDetails.contact || 'Not provided'}</p>
+                    <p style="margin: 0.25rem 0;"><strong>Location:</strong> ${item.finderDetails.location || 'Not specified'}</p>
+                    <p style="margin: 0.25rem 0;"><strong>Pickup Time:</strong> ${item.finderDetails.pickupTime || 'Not specified'}</p>
+            </div>
+            </div>
+            ` : ''}
         </div>
     `;
 }
@@ -454,6 +529,17 @@ function openMarkAsFoundModal(itemId) {
 
 function closeMarkAsFoundModal() {
     DOMElements.markAsFoundModal.style.display = 'none';
+}
+
+function openClaimItemModal(itemId) {
+    document.getElementById('claimItemForm').reset();
+    document.getElementById('claimItemId').value = itemId;
+    document.getElementById('claimDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('claimItemModal').style.display = 'block';
+}
+
+function closeClaimItemModal() {
+    document.getElementById('claimItemModal').style.display = 'none';
 }
 
 
@@ -547,19 +633,199 @@ function closeReunionModal() {
 }
 
 function contactFinder() {
-    // This function can be enhanced to show contact options
-    // For now, it just shows the contact information
+    // This function handles email contact for finders
     const contact = document.getElementById('reunionFinderContact').textContent;
     const name = document.getElementById('reunionFinderName').textContent;
     
+    // Since we now only accept email addresses, always open email client
     if (contact.includes('@')) {
-        // Email contact
-        window.open(`mailto:${contact}?subject=Re: Found Item - ${name}`);
-    } else if (contact.match(/\d/)) {
-        // Phone contact
-        alert(`Call or message: ${contact}\n\nFinder: ${name}`);
+        window.open(`mailto:${contact}?subject=Re: Found Item - ${name}&body=Hi ${name},%0D%0A%0D%0AI saw that you found my lost item. Thank you so much!%0D%0A%0D%0APlease let me know when would be a good time to pick it up.%0D%0A%0D%0ABest regards`);
     } else {
-        alert(`Contact: ${contact}\n\nFinder: ${name}`);
+        alert(`Contact: ${contact}\n\nFinder: ${name}\n\nPlease use your email client to contact them.`);
+    }
+}
+
+async function contactFinderFromItem(itemId) {
+    try {
+        // Fetch finder details from the server
+        const response = await fetch(`/api/finder-details/${itemId}`);
+        const data = await response.json();
+        
+        if (!data.success) {
+            alert('Finder details not available. Please try refreshing the page.');
+            return;
+        }
+        
+        const finderDetails = data.finderDetails;
+        const finderName = finderDetails.name || 'Finder';
+        const finderContact = finderDetails.contact;
+        const finderLocation = finderDetails.location;
+        const pickupTime = finderDetails.pickupTime || 'Not specified';
+        const itemName = data.itemName;
+        
+        // Create a detailed email body
+        const emailBody = `Hi ${finderName},
+
+I saw that you found my lost item: ${itemName}
+
+Thank you so much for finding it! I would like to arrange pickup.
+
+Item Details:
+- Item: ${itemName}
+- Category: ${data.category}
+
+Pickup Information:
+- Current location: ${finderLocation}
+- Preferred time: ${pickupTime}
+
+Please let me know when would be a good time to pick it up.
+
+Best regards`;
+
+        // Open email client with pre-filled details
+        if (finderContact && finderContact.includes('@')) {
+            const subject = `Re: Found Item - ${itemName}`;
+            const mailtoLink = `mailto:${finderContact}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+            window.open(mailtoLink);
+    } else {
+            // Show contact information in a modal if email is not available
+            showContactInfoModal(finderName, finderContact, finderLocation, pickupTime, itemName);
+        }
+    } catch (error) {
+        console.error('Error fetching finder details:', error);
+        alert('Error fetching finder details. Please try again.');
+    }
+}
+
+function showContactInfoModal(finderName, finderContact, finderLocation, pickupTime, itemName) {
+    // Create a modal to show contact information
+    const modalHTML = `
+        <div class="modal" id="contactInfoModal" style="display: block;">
+            <div class="modal-content">
+                <button class="close" onclick="closeContactInfoModal()" aria-label="Close">&times;</button>
+                <h3><i class="fas fa-user" aria-hidden="true"></i> Contact Information</h3>
+                <p><strong>Item:</strong> ${itemName}</p>
+                <div class="contact-details">
+                    <p><strong>Finder's Name:</strong> ${finderName}</p>
+                    <p><strong>Email:</strong> ${finderContact || 'Not provided'}</p>
+                    <p><strong>Pickup Location:</strong> ${finderLocation}</p>
+                    <p><strong>Preferred Time:</strong> ${pickupTime}</p>
+                </div>
+                <div class="contact-actions">
+                    ${finderContact && finderContact.includes('@') ? 
+                        `<button class="btn btn-primary" onclick="window.open('mailto:${finderContact}?subject=Re: Found Item - ${itemName}')">
+                            <i class="fas fa-envelope" aria-hidden="true"></i> Send Email
+                        </button>` : 
+                        '<p class="no-email">Email address not available. Please contact the finder through other means.</p>'
+                    }
+                    <button class="btn btn-secondary" onclick="closeContactInfoModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeContactInfoModal() {
+    const modal = document.getElementById('contactInfoModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function showOwnerNotification(lostItem, finderName, finderContact, finderLocation) {
+    // Create a notification modal for the original owner
+    const notificationHTML = `
+        <div class="modal" id="ownerNotificationModal" style="display: block;">
+            <div class="modal-content">
+                <button class="close" onclick="closeOwnerNotificationModal()" aria-label="Close">&times;</button>
+                <div class="notification-header">
+                    <i class="fas fa-bell notification-icon" aria-hidden="true"></i>
+                    <h3>🎉 Great News! Your Item Has Been Found!</h3>
+                </div>
+                <div class="notification-content">
+                    <p><strong>Item:</strong> ${lostItem.itemName}</p>
+                    <p><strong>Found by:</strong> ${finderName}</p>
+                    <p><strong>Current location:</strong> ${finderLocation}</p>
+                    <p><strong>Contact:</strong> ${finderContact}</p>
+                    
+                    <div class="notification-actions">
+                        <button class="btn btn-primary" onclick="contactFinderFromItem('${lostItem.id}')">
+                            <i class="fas fa-envelope" aria-hidden="true"></i> Contact Finder Now
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeOwnerNotificationModal()">
+                            <i class="fas fa-check" aria-hidden="true"></i> Got It
+                        </button>
+                    </div>
+                    
+                    <div class="notification-tip">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <strong>Tip:</strong> You can also contact the finder anytime by clicking the "Contact Finder" button on your item listing.
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add notification to body
+    document.body.insertAdjacentHTML('beforeend', notificationHTML);
+}
+
+function closeOwnerNotificationModal() {
+    const modal = document.getElementById('ownerNotificationModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function showClaimNotification(foundItem, claimerName, claimerEmail, claimDescription, claimLocation, claimDate) {
+    // Create a notification modal for the claimer
+    const notificationHTML = `
+        <div class="modal" id="claimNotificationModal" style="display: block;">
+            <div class="modal-content">
+                <button class="close" onclick="closeClaimNotificationModal()" aria-label="Close">&times;</button>
+                <div class="notification-header">
+                    <i class="fas fa-hand-paper notification-icon" aria-hidden="true"></i>
+                    <h3>📝 Claim Submitted Successfully!</h3>
+                </div>
+                <div class="notification-content">
+                    <p><strong>Item:</strong> ${foundItem.itemName}</p>
+                    <p><strong>Your Name:</strong> ${claimerName}</p>
+                    <p><strong>Your Email:</strong> ${claimerEmail}</p>
+                    <p><strong>Claim Date:</strong> ${new Date().toLocaleDateString()}</p>
+                    
+                    <div class="claim-details">
+                        <h4>Your Claim Details:</h4>
+                        <p><strong>Description:</strong> ${claimDescription}</p>
+                        <p><strong>Lost Location:</strong> ${claimLocation}</p>
+                        <p><strong>Lost Date:</strong> ${new Date(claimDate).toLocaleDateString()}</p>
+                    </div>
+                    
+                    <div class="notification-actions">
+                        <button class="btn btn-secondary" onclick="closeClaimNotificationModal()">
+                            <i class="fas fa-check" aria-hidden="true"></i> Got It
+                        </button>
+                    </div>
+                    
+                    <div class="notification-tip">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <strong>Next Steps:</strong> The finder will be notified of your claim and can verify the details. You'll receive an email when they respond.
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add notification to body
+    document.body.insertAdjacentHTML('beforeend', notificationHTML);
+}
+
+function closeClaimNotificationModal() {
+    const modal = document.getElementById('claimNotificationModal');
+    if (modal) {
+        modal.remove();
     }
 }
 
@@ -638,8 +904,8 @@ function renderSuccessStories() {
                 <div class="finder-details">
                     <h5><i class="fas fa-user" aria-hidden="true"></i> Found By:</h5>
                     <p><strong>Name:</strong> ${item.finderName || 'Not provided'}</p>
-                    <p><strong>Contact:</strong> ${item.contact}</p>
-                    <p><strong>Pickup Location:</strong> ${item.currentLocation}</p>
+                    <p><strong>Email:</strong> ${item.finderContact || item.contact}</p>
+                    <p><strong>Pickup Location:</strong> ${item.finderLocation || item.currentLocation}</p>
                     ${item.pickupTime ? `<p><strong>Preferred Time:</strong> ${item.pickupTime}</p>` : ''}
                     ${item.finderNotes ? `<p><strong>Notes:</strong> ${item.finderNotes}</p>` : ''}
                 </div>
