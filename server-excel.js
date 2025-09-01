@@ -1,9 +1,12 @@
+// server-excel.js (full file — dual-mode email: SMTP locally, SendGrid API on production)
+
 const express = require('express');
 const cors = require('cors');
 const XLSX = require('xlsx');
 const fs = require('fs').promises;
 const path = require('path');
 const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,72 +18,118 @@ app.use(express.static(path.join(__dirname, '.')));
 
 // Excel file path
 const EXCEL_FILE = path.join(__dirname, 'lost_found_items.xlsx');
-const sgMail = require("@sendgrid/mail");
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-const emailConfig = {
-  host: "smtp.sendgrid.net",
-  port: 587,
-  secure: false,
-  auth: {
-    user: "apikey", // Always this string
-    pass: process.env.SENDGRID_API_KEY,
-  },
-};
-const transporter = nodemailer.createTransport(emailConfig);
-async function sendEmail(to, subject, htmlContent) {
-  const mailOptions = {
-    from: "campusfindthelost@gmail.com", // must be verified in SendGrid
-    to,
-    subject,
-    html: htmlContent,
-  };
 
-  try {
-    // Try SMTP first
-    const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent via SMTP:", info.messageId);
-    return true;
-  } catch (error) {
-    console.error("❌ SMTP failed:", error.message);
-
-    try {
-      // Fallback to Web API
-      await sgMail.send({
-        to,
-        from: "campusfindthelost@gmail.com", // must be verified in SendGrid
-        subject,
-        html: htmlContent,
-      });
-
-      console.log("✅ Email sent via SendGrid Web API");
-      return true;
-    } catch (apiError) {
-      console.error("❌ SendGrid API failed:", apiError.message);
-      return false;
-    }
-  }
+// --- Email configuration (dual-mode) ---
+// SendGrid initialization (used in production / Railway)
+if (process.env.SENDGRID_API_KEY) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+} else {
+    console.log('⚠️ SENDGRID_API_KEY is not set. SendGrid Web API will not be available until you set it.');
 }
 
-
-// Email helper functions
+/**
+ * sendEmail:
+ * - If running in production / Railway -> use SendGrid Web API
+ * - Otherwise -> try SMTP via nodemailer (local dev)
+ */
 async function sendEmail(to, subject, htmlContent) {
+    const isProduction = !!process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production';
+
+    // Use SendGrid Web API in production / Railway
+    if (isProduction) {
+        if (!process.env.SENDGRID_API_KEY) {
+            console.error('❌ Running in production but SENDGRID_API_KEY is missing. Email not sent.');
+            return false;
+        }
+
+        try {
+            const msg = {
+                to,
+                from: process.env.SENDGRID_FROM || 'campusfindthelost@gmail.com', // must be a verified sender in SendGrid
+                subject,
+                html: htmlContent,
+            };
+
+            await sgMail.send(msg);
+            console.log(`✅ Email sent successfully via SendGrid Web API to ${to}`);
+            return true;
+        } catch (error) {
+            console.error('❌ SendGrid API error:', error.message || error);
+            if (error.response && error.response.body) {
+                console.error('SendGrid response body:', error.response.body);
+            }
+            return false;
+        }
+    }
+
+    // Local/dev: try SMTP via nodemailer
     try {
+        // Build SMTP config from environment (defaults fallback to Gmail-like config if present)
+        // You should set SMTP_HOST, SMTP_PORT, SMTP_SECURE, EMAIL_USER, EMAIL_PASS for local testing.
+        const smtpHost = process.env.SMTP_HOST || 'smtp.sendgrid.net';
+        const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
+        const smtpSecure = (process.env.SMTP_SECURE === 'true') || false;
+
+        const smtpAuthUser = process.env.EMAIL_USER || process.env.SMTP_USER || 'apikey';
+        const smtpAuthPass = process.env.EMAIL_PASS || process.env.SMTP_PASS || process.env.SENDGRID_API_KEY || '';
+
+        const emailConfig = {
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpSecure, // true for 465, false for other ports
+            auth: {
+                user: smtpAuthUser,
+                pass: smtpAuthPass,
+            },
+            // Some environments require this when using self-signed certs
+            tls: {
+                rejectUnauthorized: false,
+            },
+            connectionTimeout: 20000, // 20s
+        };
+
+        const transporter = nodemailer.createTransport(emailConfig);
+
         const mailOptions = {
-            from: emailConfig.auth.user,
-            to: to,
-            subject: subject,
-            html: htmlContent
+            from: process.env.SENDGRID_FROM || emailConfig.auth.user || 'campusfindthelost@gmail.com',
+            to,
+            subject,
+            html: htmlContent,
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent successfully:', info.messageId);
+        console.log('✅ Email sent via SMTP:', info.messageId || info);
         return true;
-    } catch (error) {
-        console.error('Error sending email:', error);
+    } catch (err) {
+        console.error('❌ SMTP failed:', err && err.message ? err.message : err);
+        // Do NOT fallback to SendGrid API here — we only reach here in local dev if SMTP fails.
+        // If you want an additional fallback locally, you could attempt sgMail if SENDGRID_API_KEY exists.
+        if (process.env.SENDGRID_API_KEY) {
+            // Optional fallback: try SendGrid API locally if SMTP fails
+            try {
+                const msg = {
+                    to,
+                    from: process.env.SENDGRID_FROM || 'campusfindthelost@gmail.com',
+                    subject,
+                    html: htmlContent,
+                };
+                await sgMail.send(msg);
+                console.log(`✅ Fallback: Email sent via SendGrid Web API to ${to}`);
+                return true;
+            } catch (apiErr) {
+                console.error('❌ Fallback SendGrid API error:', apiErr.message || apiErr);
+                if (apiErr.response && apiErr.response.body) {
+                    console.error('SendGrid response body:', apiErr.response.body);
+                }
+                return false;
+            }
+        }
+
         return false;
     }
 }
 
+// --- Email template generator (unchanged contents from your original file) ---
 function createEmailTemplate(type, data) {
     const baseStyle = `
         <style>
@@ -219,6 +268,7 @@ function createEmailTemplate(type, data) {
 }
 
 // --- Excel Database Helper Functions ---
+// The code below is kept identical to your original logic
 
 /**
  * Ensures the Excel file exists. If not, it creates it with proper structure.
@@ -725,7 +775,6 @@ app.get('/api/finder-details/:itemId', async (req, res) => {
 });
 
 // --- Server Startup ---
-
 async function startServer() {
     await initializeExcelDatabase();
     app.listen(PORT, () => {
@@ -737,8 +786,3 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
-
-
-
-
-
