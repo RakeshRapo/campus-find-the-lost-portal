@@ -358,22 +358,28 @@ async function readExcelDatabase() {
 /**
  * Writes data to Excel file
  */
+/**
+ * Writes data to Excel file
+ */
 async function writeExcelDatabase(data) {
     try {
         const workbook = XLSX.utils.book_new();
         
-        // Convert lost items to array format
+        // Lost items headers
         const lostItemsHeaders = [
             'id', 'status', 'itemName', 'category', 'location', 'dateLost', 
             'timeLost', 'description', 'contact', 'reward', 'type', 'datePosted',
             'dateFound', 'finderDetails'
         ];
         
+        // Found items headers (FULL version, same as initializeExcelDatabase)
         const foundItemsHeaders = [
             'id', 'status', 'itemName', 'category', 'location', 'dateFound', 
             'description', 'contact', 'currentLocation', 'originalLostItemId', 
             'type', 'datePosted', 'finderName', 'finderContact', 'finderLocation', 
-            'finderNotes', 'pickupTime', 'reunionDate'
+            'finderNotes', 'pickupTime', 'reunionDate',
+            'claimerName', 'claimerEmail', 'claimDescription',
+            'claimLocation', 'claimDate', 'claimNotes', 'claimStatus'
         ];
         
         // Convert lost items to rows
@@ -405,6 +411,7 @@ async function writeExcelDatabase(data) {
         console.error('Error writing to Excel database:', error);
     }
 }
+
 
 /**
  * Generates a simple unique ID
@@ -786,3 +793,4 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+
