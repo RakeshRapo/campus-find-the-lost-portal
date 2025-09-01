@@ -15,12 +15,8 @@ app.use(express.static(path.join(__dirname, '.')));
 
 // Excel file path
 const EXCEL_FILE = path.join(__dirname, 'lost_found_items.xlsx');
-
-const nodemailer = require("nodemailer");
 const sgMail = require("@sendgrid/mail");
-
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 const emailConfig = {
   host: "smtp.sendgrid.net",
   port: 587,
@@ -30,9 +26,7 @@ const emailConfig = {
     pass: process.env.SENDGRID_API_KEY,
   },
 };
-
 const transporter = nodemailer.createTransport(emailConfig);
-
 async function sendEmail(to, subject, htmlContent) {
   const mailOptions = {
     from: "campusfindthelost@gmail.com", // must be verified in SendGrid
@@ -743,6 +737,7 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+
 
 
 
