@@ -201,6 +201,60 @@ app.post('/api/send-claim-notification', async (req, res) => {
         res.status(500).json({ message: 'Failed to send email.' });
     }
 });
+const xlsx = require('xlsx');
+
+// --- Export data to Excel ---
+app.get('/api/export', async (req, res) => {
+    try {
+        const db = await readDatabase();
+
+        // Prepare Lost Items sheet
+        const lostSheetData = db.lostItems.map(item => ({
+            ID: item.id,
+            Item: item.itemName || '',
+            Category: item.category || '',
+            Status: item.status || '',
+            ReportedAt: item.reportedAt || '',
+            FinderName: item.finderDetails?.name || '',
+            FinderContact: item.finderDetails?.contact || '',
+            FinderLocation: item.finderDetails?.location || '',
+            FinderNotes: item.finderDetails?.notes || '',
+            PickupTime: item.finderDetails?.pickupTime || '',
+            FinderSavedAt: item.finderDetails?.savedAt || ''
+        }));
+
+        // Prepare Found Items sheet
+        const foundSheetData = db.foundItems.map(item => ({
+            ID: item.id,
+            Item: item.itemName || '',
+            Category: item.category || '',
+            Status: item.status || '',
+            PostedAt: item.reportedAt || '',
+            FinderPosterName: item.posterName || '',
+            FinderPosterEmail: item.posterEmail || '',
+            // If you later save claim requests in DB, include them like this:
+            ClaimerName: item.claimerName || '',
+            ClaimerEmail: item.claimerEmail || '',
+            ClaimDescription: item.claimDescription || ''
+        }));
+
+        // Create workbook
+        const wb = xlsx.utils.book_new();
+        const lostSheet = xlsx.utils.json_to_sheet(lostSheetData);
+        const foundSheet = xlsx.utils.json_to_sheet(foundSheetData);
+
+        xlsx.utils.book_append_sheet(wb, lostSheet, 'Lost Items');
+        xlsx.utils.book_append_sheet(wb, foundSheet, 'Found Items');
+
+        const filePath = path.join(__dirname, 'lost_found_items.xlsx');
+        xlsx.writeFile(wb, filePath);
+
+        res.download(filePath, 'lost_found_items.xlsx');
+    } catch (err) {
+        console.error('❌ Error exporting Excel:', err);
+        res.status(500).json({ message: 'Error exporting Excel file.' });
+    }
+});
 
 // --- Server ---
 async function startServer() {
@@ -210,3 +264,4 @@ async function startServer() {
     });
 }
 startServer().catch(console.error);
+
