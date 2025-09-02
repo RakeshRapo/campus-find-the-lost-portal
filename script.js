@@ -278,23 +278,41 @@ async function handleMarkAsFoundSubmit(event) {
 /**
  * Handles the submission of item claims by users who believe the item belongs to them.
  */
+// --- FIXED handleClaimItemSubmit ---
 async function handleClaimItemSubmit(event) {
     event.preventDefault();
+
     const itemId = document.getElementById('claimItemId').value;
-    
-    // Collect claim details
-    const claimerName = document.getElementById('claimerName').value.trim();
-    const claimerEmail = document.getElementById('claimerEmail').value.trim();
-    const claimDescription = document.getElementById('claimDescription').value.trim();
-    const claimLocation = document.getElementById('claimLocation').value.trim();
-    const claimDate = document.getElementById('claimDate').value;
-    const claimNotes = document.getElementById('claimNotes').value.trim();
-    
-    // Validate required fields
-    if (!claimerName || !claimerEmail || !claimDescription || !claimLocation || !claimDate) {
-        alert('Please fill in all required fields.');
-        return;
+    const claimerName = document.getElementById('claimerName').value;
+    const claimerEmail = document.getElementById('claimerEmail').value;
+    const claimDescription = document.getElementById('claimDescription').value;
+
+    try {
+        const response = await fetch('/api/send-claim-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                itemId: itemId,                // ✅ only itemId
+                claimerName: claimerName,
+                claimerEmail: claimerEmail,
+                claimDescription: claimDescription
+            }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('✅ Claim submitted successfully! The finder has been notified.');
+            document.getElementById('claimForm').reset();
+        } else {
+            alert(`❌ Failed to submit claim: ${result.message}`);
+        }
+    } catch (error) {
+        console.error('Error submitting claim:', error);
+        alert('⚠️ Error submitting claim. Please try again.');
     }
+}
+
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -971,6 +989,7 @@ function renderSuccessStories() {
 }
 
 // --- ENHANCED RENDERING ---
+
 
 
 
