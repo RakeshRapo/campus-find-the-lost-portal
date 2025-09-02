@@ -7,13 +7,14 @@ const nodemailer = require('nodemailer'); // Import nodemailer
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- Nodemailer Configuration ---
+// --- Nodemailer Configuration with SendGrid ---
 const transporter = nodemailer.createTransport({
-    // Replace with your email service provider details
-    service: 'gmail',
+    host: 'smtp.sendgrid.net',
+    port: 587,
+    secure: false, // TLS is used with port 587
     auth: {
-        user: 'YOUR_EMAIL@gmail.com',
-        pass: 'YOUR_EMAIL_PASSWORD'
+        user: 'apikey', // DO NOT change this, it's always 'apikey'
+        pass: process.env.SENDGRID_API_KEY // Must be set in Railway Variables
     }
 });
 
@@ -153,8 +154,8 @@ app.post('/api/send-claim-notification', async (req, res) => {
     }
 
     const mailOptions = {
-        from: 'YOUR_EMAIL@gmail.com', // Sender address (must match the auth user)
-        to: toEmail, // Recipient email from the frontend
+        from: 'verified_sender@example.com', // Must match your SendGrid verified sender
+        to: toEmail, // Finder’s email
         subject: `New Claim on Your Found Item: ${itemName}`,
         html: `
             <h3>Hello,</h3>
@@ -182,7 +183,6 @@ app.post('/api/send-claim-notification', async (req, res) => {
 });
 
 // --- Server Startup ---
-
 async function startServer() {
     await initializeDatabase();
     app.listen(PORT, () => {
