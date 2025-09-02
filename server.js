@@ -255,6 +255,11 @@ app.get('/api/export', async (req, res) => {
         res.status(500).json({ message: 'Error exporting Excel file.' });
     }
 });
+// Save claim details in DB
+foundItem.claimerName = claimerName;
+foundItem.claimerEmail = claimerEmail;
+foundItem.claimDescription = claimDescription;
+await writeDatabase(db);
 
 // --- Server ---
 async function startServer() {
@@ -264,4 +269,5 @@ async function startServer() {
     });
 }
 startServer().catch(console.error);
+
 
