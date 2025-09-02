@@ -281,7 +281,7 @@ async function handleMarkAsFoundSubmit(event) {
 async function handleClaimItemSubmit(event) {
     event.preventDefault();
     const itemId = document.getElementById('claimItemId').value;
-
+    
     // Collect claim details
     const claimerName = document.getElementById('claimerName').value.trim();
     const claimerEmail = document.getElementById('claimerEmail').value.trim();
@@ -289,7 +289,7 @@ async function handleClaimItemSubmit(event) {
     const claimLocation = document.getElementById('claimLocation').value.trim();
     const claimDate = document.getElementById('claimDate').value;
     const claimNotes = document.getElementById('claimNotes').value.trim();
-
+    
     // Validate required fields
     if (!claimerName || !claimerEmail || !claimDescription || !claimLocation || !claimDate) {
         alert('Please fill in all required fields.');
@@ -340,9 +340,9 @@ async function handleClaimItemSubmit(event) {
         // Show claim notification modal to the claimer
         showClaimNotification(foundItem, claimerName, claimerEmail, claimDescription, claimLocation, claimDate);
         
-        // --- NEW CODE ADDED HERE ---
-        // Notify the original poster of the found item about the new claim.
+        // --- NEW CODE: Notifying the original poster of the found item ---
         if (foundItem.contact) {
+            // We'll assume a new backend endpoint exists to handle sending emails.
             await fetch('/api/send-claim-notification', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -356,10 +356,10 @@ async function handleClaimItemSubmit(event) {
             });
         }
         // --- END OF NEW CODE ---
-
+        
         await loadItemsAndRender();
         showSuccessModal(`🎉 Claim submitted successfully! The finder will be notified and can verify your claim.`);
-
+        
     } catch (error) {
         console.error('Error submitting claim:', error);
         alert('Could not submit your claim. Please check your connection and try again.');
@@ -971,6 +971,7 @@ function renderSuccessStories() {
 }
 
 // --- ENHANCED RENDERING ---
+
 
 
 
