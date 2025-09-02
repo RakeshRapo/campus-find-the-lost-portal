@@ -7,14 +7,14 @@ const nodemailer = require('nodemailer');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- Nodemailer with SendGrid ---
+// --- Nodemailer Configuration with SendGrid ---
 const transporter = nodemailer.createTransport({
     host: 'smtp.sendgrid.net',
     port: 587,
-    secure: false,
+    secure: false, // TLS
     auth: {
         user: 'apikey', // DO NOT change
-        pass: process.env.SENDGRID_API_KEY // Railway → Add SENDGRID_API_KEY
+        pass: process.env.SENDGRID_API_KEY // Railway variable
     }
 });
 
@@ -27,7 +27,7 @@ app.use('/api', (req, res, next) => {
 });
 app.use(express.static(path.join(__dirname, '.')));
 
-// Database file
+// Database file path
 const DB_FILE = path.join(__dirname, 'database.json');
 
 // --- Database Helpers ---
@@ -35,41 +35,33 @@ async function initializeDatabase() {
     try {
         await fs.access(DB_FILE);
     } catch {
-        console.log('📁 Database not found. Creating a new one...');
+        console.log('Database not found. Creating a new one...');
         const initialData = { lostItems: [], foundItems: [] };
         await fs.writeFile(DB_FILE, JSON.stringify(initialData, null, 2));
     }
 }
-
 async function readDatabase() {
     try {
         const data = await fs.readFile(DB_FILE, 'utf8');
         return JSON.parse(data);
-    } catch (err) {
-        console.error('❌ Error reading DB:', err);
+    } catch {
         return { lostItems: [], foundItems: [] };
     }
 }
-
 async function writeDatabase(data) {
-    try {
-        await fs.writeFile(DB_FILE, JSON.stringify(data, null, 2));
-    } catch (err) {
-        console.error('❌ Error writing DB:', err);
-    }
+    await fs.writeFile(DB_FILE, JSON.stringify(data, null, 2));
 }
-
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
 // --- API Routes ---
 
-// Get all items
+// Fetch all lost + found
 app.get('/api/items', async (req, res) => {
     try {
         const data = await readDatabase();
-        res.status(200).json(data);
+        res.json(data);
     } catch {
         res.status(500).json({ message: 'Error fetching items.' });
     }
@@ -79,11 +71,7 @@ app.get('/api/items', async (req, res) => {
 app.post('/api/items/lost', async (req, res) => {
     try {
         const db = await readDatabase();
-        const newItem = {
-            id: generateId(),
-            status: 'active',
-            ...req.body
-        };
+        const newItem = { id: generateId(), status: 'active', ...req.body };
         db.lostItems.push(newItem);
         await writeDatabase(db);
         res.status(201).json(newItem);
@@ -92,17 +80,15 @@ app.post('/api/items/lost', async (req, res) => {
     }
 });
 
-// Add found item (store finder email!)
+// Add found item (finder MUST include posterName + posterEmail)
 app.post('/api/items/found', async (req, res) => {
     try {
+        const { posterName, posterEmail } = req.body;
+        if (!posterName || !posterEmail) {
+            return res.status(400).json({ message: 'Finder name and email are required.' });
+        }
         const db = await readDatabase();
-        const newItem = {
-            id: generateId(),
-            status: 'active',
-            posterName: req.body.posterName,   // Finder’s name
-            posterEmail: req.body.posterEmail, // Finder’s email (📌 REQUIRED)
-            ...req.body
-        };
+        const newItem = { id: generateId(), status: 'active', ...req.body };
         db.foundItems.push(newItem);
         await writeDatabase(db);
         res.status(201).json(newItem);
@@ -111,7 +97,7 @@ app.post('/api/items/found', async (req, res) => {
     }
 });
 
-// Update status
+// Update item status
 app.put('/api/items/:type/:id', async (req, res) => {
     const { type, id } = req.params;
     const { status } = req.body;
@@ -120,29 +106,26 @@ app.put('/api/items/:type/:id', async (req, res) => {
     try {
         const db = await readDatabase();
         const items = type === 'lost' ? db.lostItems : db.foundItems;
-        const idx = items.findIndex(item => item.id === id);
+        const itemIndex = items.findIndex(item => item.id === id);
+        if (itemIndex === -1) return res.status(404).json({ message: 'Item not found.' });
 
-        if (idx === -1) return res.status(404).json({ message: 'Item not found.' });
-
-        items[idx].status = status;
+        items[itemIndex].status = status;
         await writeDatabase(db);
-        res.status(200).json(items[idx]);
+        res.json(items[itemIndex]);
     } catch {
         res.status(500).json({ message: 'Error updating item.' });
     }
 });
 
-// Save Finder details (for lost item)
+// Save finder details for a lost item
 app.post('/api/finder-details', async (req, res) => {
     const { itemId, finderName, finderContact, finderLocation, finderNotes, pickupTime } = req.body;
     if (!itemId || !finderName || !finderContact) {
-        return res.status(400).json({ success: false, message: 'Missing fields' });
+        return res.status(400).json({ success: false, message: 'Missing fields.' });
     }
-
     try {
         const db = await readDatabase();
         const idx = db.lostItems.findIndex(item => item.id === itemId);
-
         if (idx === -1) return res.status(404).json({ success: false, message: 'Lost item not found' });
 
         db.lostItems[idx].status = 'found';
@@ -158,35 +141,26 @@ app.post('/api/finder-details', async (req, res) => {
         await writeDatabase(db);
         res.json({ success: true, finderDetails: db.lostItems[idx].finderDetails });
     } catch (err) {
-        console.error('❌ Error saving finder details:', err);
         res.status(500).json({ success: false, message: 'Error saving finder details' });
     }
 });
 
-// Get Finder details
+// Fetch finder details
 app.get('/api/finder-details/:itemId', async (req, res) => {
     try {
         const { itemId } = req.params;
         const db = await readDatabase();
-        const lostItem = db.lostItems.find(item => item.id === itemId);
-
-        if (!lostItem || !lostItem.finderDetails) {
+        const item = db.lostItems.find(i => i.id === itemId);
+        if (!item || !item.finderDetails) {
             return res.json({ success: false, message: 'Finder details not found' });
         }
-
-        res.json({
-            success: true,
-            itemName: lostItem.itemName,
-            category: lostItem.category,
-            finderDetails: lostItem.finderDetails
-        });
-    } catch (err) {
-        console.error('❌ Error fetching finder details:', err);
+        res.json({ success: true, itemName: item.itemName, category: item.category, finderDetails: item.finderDetails });
+    } catch {
         res.status(500).json({ success: false, message: 'Error fetching finder details' });
     }
 });
 
-// --- Send Claim Notification (to Finder, not Claimer) ---
+// --- Claim Notification (emails Finder, not claimer) ---
 app.post('/api/send-claim-notification', async (req, res) => {
     const { itemId, claimerName, claimerEmail, claimDescription } = req.body;
     if (!itemId) return res.status(400).json({ message: 'Item ID required.' });
@@ -200,34 +174,35 @@ app.post('/api/send-claim-notification', async (req, res) => {
         }
 
         const mailOptions = {
-            from: 'verified_sender@example.com', // Must match SendGrid verified sender
-            to: foundItem.posterEmail,           // 📩 Finder gets the email
-            subject: `New Claim on Your Found Item: ${foundItem.itemName}`,
+            from: 'verified_sender@example.com', // Must be a SendGrid verified sender
+            to: foundItem.posterEmail,          // ✅ Email goes to Finder
+            subject: `New Claim on Your Found Item: ${foundItem.itemName || 'Unknown Item'}`,
             html: `
                 <h3>Hello ${foundItem.posterName || 'Finder'},</h3>
-                <p>Someone has submitted a claim for the item you posted as found: <strong>${foundItem.itemName}</strong>.</p>
-                <p>Here are the details of the claimer:</p>
+                <p>Someone has submitted a claim for the item you posted as found: 
+                   <strong>${foundItem.itemName || 'Item'}</strong>.</p>
+                <p>Claimer details:</p>
                 <ul>
                     <li><strong>Name:</strong> ${claimerName}</li>
                     <li><strong>Email:</strong> ${claimerEmail}</li>
                 </ul>
                 <p><strong>Claim Description:</strong> ${claimDescription}</p>
-                <p>Please contact them to verify details and arrange the item return.</p>
+                <p>Please contact them to verify and arrange return of the item.</p>
                 <br>
                 <p>Best regards,<br>The Campus Lost & Found Team</p>
             `
         };
 
         await transporter.sendMail(mailOptions);
-        console.log('✅ Claim notification sent to finder:', foundItem.posterEmail);
-        res.status(200).json({ message: 'Email sent successfully to finder.' });
-    } catch (error) {
-        console.error('❌ Email error:', error);
-        res.status(500).json({ message: 'Failed to send email.', error: error.message });
+        console.log(`✅ Email sent to finder: ${foundItem.posterEmail}`);
+        res.json({ message: 'Email sent successfully to finder.' });
+    } catch (err) {
+        console.error('❌ Error sending claim email:', err);
+        res.status(500).json({ message: 'Failed to send email.' });
     }
 });
 
-// --- Start Server ---
+// --- Server ---
 async function startServer() {
     await initializeDatabase();
     app.listen(PORT, () => {
