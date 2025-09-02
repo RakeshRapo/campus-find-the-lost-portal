@@ -3,6 +3,7 @@ const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
 const nodemailer = require('nodemailer');
+const xlsx = require('xlsx');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 const transporter = nodemailer.createTransport({
     host: 'smtp.sendgrid.net',
     port: 587,
-    secure: false, // TLS
+    secure: false,
     auth: {
         user: 'apikey', // DO NOT change
         pass: process.env.SENDGRID_API_KEY // Railway variable
@@ -71,7 +72,12 @@ app.get('/api/items', async (req, res) => {
 app.post('/api/items/lost', async (req, res) => {
     try {
         const db = await readDatabase();
-        const newItem = { id: generateId(), status: 'active', ...req.body };
+        const newItem = { 
+            id: generateId(), 
+            status: 'active', 
+            reportedAt: new Date().toISOString(),
+            ...req.body 
+        };
         db.lostItems.push(newItem);
         await writeDatabase(db);
         res.status(201).json(newItem);
@@ -88,7 +94,12 @@ app.post('/api/items/found', async (req, res) => {
             return res.status(400).json({ message: 'Finder name and email are required.' });
         }
         const db = await readDatabase();
-        const newItem = { id: generateId(), status: 'active', ...req.body };
+        const newItem = { 
+            id: generateId(), 
+            status: 'active', 
+            reportedAt: new Date().toISOString(),
+            ...req.body 
+        };
         db.foundItems.push(newItem);
         await writeDatabase(db);
         res.status(201).json(newItem);
@@ -173,6 +184,15 @@ app.post('/api/send-claim-notification', async (req, res) => {
             return res.status(404).json({ message: 'Finder email not found.' });
         }
 
+        // Save claimer info in DB
+        foundItem.claimerDetails = {
+            name: claimerName,
+            email: claimerEmail,
+            description: claimDescription,
+            submittedAt: new Date().toISOString()
+        };
+        await writeDatabase(db);
+
         const mailOptions = {
             from: 'verified_sender@example.com', // Must be a SendGrid verified sender
             to: foundItem.posterEmail,          // ✅ Email goes to Finder
@@ -201,7 +221,6 @@ app.post('/api/send-claim-notification', async (req, res) => {
         res.status(500).json({ message: 'Failed to send email.' });
     }
 });
-const xlsx = require('xlsx');
 
 // --- Export data to Excel ---
 app.get('/api/export', async (req, res) => {
@@ -232,10 +251,10 @@ app.get('/api/export', async (req, res) => {
             PostedAt: item.reportedAt || '',
             FinderPosterName: item.posterName || '',
             FinderPosterEmail: item.posterEmail || '',
-            // If you later save claim requests in DB, include them like this:
-            ClaimerName: item.claimerName || '',
-            ClaimerEmail: item.claimerEmail || '',
-            ClaimDescription: item.claimDescription || ''
+            ClaimerName: item.claimerDetails?.name || '',
+            ClaimerEmail: item.claimerDetails?.email || '',
+            ClaimDescription: item.claimerDetails?.description || '',
+            ClaimSubmittedAt: item.claimerDetails?.submittedAt || ''
         }));
 
         // Create workbook
@@ -255,11 +274,6 @@ app.get('/api/export', async (req, res) => {
         res.status(500).json({ message: 'Error exporting Excel file.' });
     }
 });
-// Save claim details in DB
-foundItem.claimerName = claimerName;
-foundItem.claimerEmail = claimerEmail;
-foundItem.claimDescription = claimDescription;
-await writeDatabase(db);
 
 // --- Server ---
 async function startServer() {
@@ -269,5 +283,3 @@ async function startServer() {
     });
 }
 startServer().catch(console.error);
-
-
