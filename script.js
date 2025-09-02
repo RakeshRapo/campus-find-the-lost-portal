@@ -348,7 +348,35 @@ async function handleClaimItemSubmit(event) {
         alert('Could not submit your claim. Please check your connection and try again.');
     }
 }
+/**
+ * Handles marking a found item as reunited after a successful claim.
+ * @param {string} itemId - The ID of the item to update.
+ */
+async function handleReuniteItem(itemId) {
+    const confirmation = confirm("Are you sure you want to mark this item as reunited? This action cannot be undone.");
+    if (!confirmation) {
+        return;
+    }
 
+    try {
+        const response = await fetch(`/api/items/found/${itemId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'reunited' }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to mark item as reunited.');
+        }
+
+        await loadItemsAndRender(); // Refresh the list to show the item in the history section
+        showSuccessModal('Item successfully marked as reunited! It has been moved to the success stories section.');
+
+    } catch (error) {
+        console.error('Error marking item as reunited:', error);
+        alert('Could not mark the item as reunited. Please try again.');
+    }
+}
 
 // --- API & DATA ---
 /**
@@ -927,5 +955,6 @@ function renderSuccessStories() {
 }
 
 // --- ENHANCED RENDERING ---
+
 
 
