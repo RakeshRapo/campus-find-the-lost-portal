@@ -1,4 +1,19 @@
 // --- STATE MANAGEMENT ---
+// --- Categories ---
+const categories = [
+  "Electronics",
+  "Jewellery",
+  "Books",
+  "Clothing",
+  "Accessories",
+  "Bags",
+  "Documents",
+  "Keys",
+  "Stationery",
+  "Sports",
+  "Others"
+];
+
 // Using a state object to hold application data fetched from the backend
 const state = {
     lostItems: [],
@@ -274,7 +289,28 @@ async function handleMarkAsFoundSubmit(event) {
         alert('Could not save finder details to the database. Please check your connection and try again.');
     }
 }
+function populateCategoryDropdowns() {
+// Reset dropdowns
+[DOMElements.lostCategorySelect, DOMElements.foundCategorySelect, DOMElements.categoryFilter].forEach(sel => sel.innerHTML = '');
 
+
+// Default options
+DOMElements.lostCategorySelect.add(new Option("Select Category", ""));
+DOMElements.foundCategorySelect.add(new Option("Select Category", ""));
+DOMElements.categoryFilter.add(new Option("All Categories", ""));
+
+
+// Populate categories from the unified list
+categories.forEach(cat => {
+DOMElements.lostCategorySelect.add(new Option(cat, cat));
+DOMElements.foundCategorySelect.add(new Option(cat, cat));
+DOMElements.categoryFilter.add(new Option(cat, cat));
+});
+
+
+// Type filter
+DOMElements.typeFilter.innerHTML = `<option value="">All Types</option><option value="lost">Lost Items</option><option value="found">Found Items</option>`;
+}
 /**
  * Handles the submission of item claims by users who believe the item belongs to them.
  */
@@ -612,34 +648,6 @@ function openClaimItemModal(itemId) {
 
 function closeClaimItemModal() {
     document.getElementById('claimItemModal').style.display = 'none';
-}
-
-
-// --- UTILITY FUNCTIONS ---
-function populateCategoryDropdowns() {
-    const categories = [
-        { value: "electronics", text: "Electronics" },
-        { value: "books", text: "Books & Stationery" },
-        { value: "clothing", text: "Clothing & Accessories" },
-        { value: "jewelry", text: "Jewelry & Watches" },
-        { value: "bags", text: "Bags & Wallets" },
-        { value: "other", text: "Other" },
-    ];
-
-    [DOMElements.lostCategorySelect, DOMElements.foundCategorySelect, DOMElements.categoryFilter].forEach(sel => sel.innerHTML = '');
-
-    const defaultOption = new Option("Select Category", "");
-    const filterDefaultOption = new Option("All Categories", "");
-    DOMElements.lostCategorySelect.add(defaultOption.cloneNode(true));
-    DOMElements.foundCategorySelect.add(defaultOption.cloneNode(true));
-    DOMElements.categoryFilter.add(filterDefaultOption);
-
-    categories.forEach(category => {
-        const option = new Option(category.text, category.value);
-        [DOMElements.lostCategorySelect, DOMElements.foundCategorySelect, DOMElements.categoryFilter].forEach(sel => sel.add(option.cloneNode(true)));
-    });
-    
-    DOMElements.typeFilter.innerHTML = `<option value="">All Types</option><option value="lost">Lost Items</option><option value="found">Found Items</option>`;
 }
 
 function formatDate(dateString) {
@@ -989,6 +997,7 @@ function renderSuccessStories() {
 }
 
 // --- ENHANCED RENDERING ---
+
 
 
 
