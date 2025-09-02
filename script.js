@@ -430,20 +430,23 @@ function renderItems(items, container) {
  */
 function createItemCardHTML(item) {
     const isLost = item.type === 'lost';
-    const isSuccessfullyFound = !isLost && item.originalLostItemId;
+    const isSuccessfullyFound = item.status === 'reunited'; // Use 'reunited' status for success
+    const isClaimPending = item.status === 'claimed'; // Use 'claimed' status for pending claim
     
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
     const isOldUnclaimedFoundItem = item.type === 'found' && !isSuccessfullyFound && new Date(item.datePosted) < threeDaysAgo;
 
-let badge = '';
-if (isSuccessfullyFound || item.status === 'found') {
-    badge = '<span class="success-badge">🎉 REUNITED!</span>';
-} else if (item.status === 'claimed') { // NEW: Add this condition for claimed items
-    badge = '<span class="status-badge" style="background-color: #f7931e;">⏳ PENDING CLAIM</span>';
-} else if (isOldUnclaimedFoundItem) {
-    badge = '<span class="success-badge" style="background: #8e44ad;">CLEARED</span>';
-}
+    let badge = '';
+    if (isSuccessfullyFound) {
+        badge = '<span class="success-badge">🎉 REUNITED!</span>';
+    } else if (isClaimPending) {
+        badge = '<span class="status-badge" style="background-color: #f7931e;">⏳ PENDING CLAIM</span>';
+    } else if (isOldUnclaimedFoundItem) {
+        badge = '<span class="status-badge" style="background: #8e44ad;">CLEARED</span>';
+    }
+
+    // Combine all parts into a single return string
     return `
         <div class="item-card fade-in ${isSuccessfullyFound ? 'found-success' : ''}">
             <div class="item-header">
@@ -459,18 +462,13 @@ if (isSuccessfullyFound || item.status === 'found') {
                 <div class="item-detail"><strong>Date Posted:</strong><span>${formatDate(item.datePosted)}</span></div>
                 ${!isLost && item.currentLocation ? `<div class="item-detail"><strong>Currently At:</strong><span>${item.currentLocation}</span></div>` : ''}
             </div>
-            // Inside createItemCardHTML function
-    return `
-        <div class="item-card fade-in ${isSuccessfullyFound ? 'found-success' : ''}">
             <div class="item-actions">
-                ${isLost && item.status !== 'found' ? `<button class="btn-contact" onclick="openMarkAsFoundModal('${item.id}')">I Found This!</button>` : ''}
-                ${isLost && item.status === 'found' ? `<button class="btn-contact" onclick="contactFinderFromItem('${item.id}')">Contact Finder</button>` : ''}
-                ${!isLost && item.status !== 'claimed' ? `<button class="btn-claim" onclick="openClaimItemModal('${item.id}')">This Belongs to Me!</button>` : ''}
-                
-                ${!isLost && item.status === 'claimed' ? `<button class="btn-reunite" onclick="handleReuniteItem('${item.id}')">Mark as Reunited</button>` : ''}
+                ${isLost && !isSuccessfullyFound ? `<button class="btn-contact" onclick="openMarkAsFoundModal('${item.id}')">I Found This!</button>` : ''}
+                ${isLost && isSuccessfullyFound ? `<button class="btn-contact" onclick="contactFinderFromItem('${item.id}')">Contact Finder</button>` : ''}
+                ${!isLost && !isClaimPending ? `<button class="btn-claim" onclick="openClaimItemModal('${item.id}')">This Belongs to Me!</button>` : ''}
+                ${!isLost && isClaimPending ? `<button class="btn-reunite" onclick="handleReuniteItem('${item.id}')">Mark as Reunited</button>` : ''}
             </div>
-            </div>
-            ${isLost && item.status === 'found' && item.finderDetails ? `
+            ${isLost && isSuccessfullyFound && item.finderDetails ? `
             <div class="finder-info-display" style="margin-top: 1rem; padding: 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 10px; border-left: 4px solid #667eea;">
                 <h4 style="margin: 0 0 0.5rem 0; color: #667eea; font-size: 0.9rem;">📞 Finder Information</h4>
                 <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.8);">
@@ -478,7 +476,7 @@ if (isSuccessfullyFound || item.status === 'found') {
                     <p style="margin: 0.25rem 0;"><strong>Contact:</strong> ${item.finderDetails.contact || 'Not provided'}</p>
                     <p style="margin: 0.25rem 0;"><strong>Location:</strong> ${item.finderDetails.location || 'Not specified'}</p>
                     <p style="margin: 0.25rem 0;"><strong>Pickup Time:</strong> ${item.finderDetails.pickupTime || 'Not specified'}</p>
-            </div>
+                </div>
             </div>
             ` : ''}
         </div>
@@ -956,6 +954,7 @@ function renderSuccessStories() {
 }
 
 // --- ENHANCED RENDERING ---
+
 
 
 
