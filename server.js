@@ -144,6 +144,66 @@ app.put('/api/items/:type/:id', async (req, res) => {
         res.status(500).json({ message: 'Error updating item.' });
     }
 });
+// --- Save Finder Details ---
+app.post('/api/finder-details', async (req, res) => {
+    const { itemId, finderName, finderContact, finderLocation, finderNotes, pickupTime } = req.body;
+
+    if (!itemId || !finderName || !finderContact) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    try {
+        const db = await readDatabase();
+
+        // Find the lost item
+        const lostItemIndex = db.lostItems.findIndex(item => item.id === itemId);
+
+        if (lostItemIndex === -1) {
+            return res.status(404).json({ success: false, message: 'Lost item not found' });
+        }
+
+        // Attach finder details
+        db.lostItems[lostItemIndex].status = 'found'; // update status
+        db.lostItems[lostItemIndex].finderDetails = {
+            name: finderName,
+            contact: finderContact,
+            location: finderLocation,
+            notes: finderNotes,
+            pickupTime: pickupTime,
+            savedAt: new Date().toISOString()
+        };
+
+        await writeDatabase(db);
+
+        return res.json({ success: true, finderDetails: db.lostItems[lostItemIndex].finderDetails });
+    } catch (err) {
+        console.error('Error saving finder details:', err);
+        res.status(500).json({ success: false, message: 'Error saving finder details' });
+    }
+});
+
+// --- Fetch Finder Details ---
+app.get('/api/finder-details/:itemId', async (req, res) => {
+    try {
+        const { itemId } = req.params;
+        const db = await readDatabase();
+
+        const lostItem = db.lostItems.find(item => item.id === itemId);
+        if (!lostItem || !lostItem.finderDetails) {
+            return res.json({ success: false, message: 'Finder details not found' });
+        }
+
+        res.json({
+            success: true,
+            itemName: lostItem.itemName,
+            category: lostItem.category,
+            finderDetails: lostItem.finderDetails
+        });
+    } catch (err) {
+        console.error('Error fetching finder details:', err);
+        res.status(500).json({ success: false, message: 'Error fetching finder details' });
+    }
+});
 
 // --- NEW API ROUTE TO SEND EMAIL NOTIFICATIONS ---
 app.post('/api/send-claim-notification', async (req, res) => {
@@ -193,3 +253,4 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+
