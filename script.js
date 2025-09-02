@@ -30,6 +30,7 @@ const DOMElements = {
     lostDateInput: document.getElementById('lostDate'),
     foundDateInput: document.getElementById('foundDate'),
     itemsContainer: document.getElementById('itemsContainer'),
+    foundItemsContainer: document.getElementById('foundItemsContainer'),
     historyContainer: document.getElementById('historyContainer'), // For resolved items
     searchInput: document.getElementById('searchInput'),
     categoryFilter: document.getElementById('categoryFilter'),
@@ -290,24 +291,28 @@ async function handleMarkAsFoundSubmit(event) {
     }
 }
 function populateCategoryDropdowns() {
-// Reset dropdowns
-[DOMElements.lostCategorySelect, DOMElements.foundCategorySelect, DOMElements.categoryFilter].forEach(sel => sel.innerHTML = '');
+    const lostCategorySelect = document.getElementById('lostCategory');
+    const foundCategorySelect = document.getElementById('foundCategory');
+    const filterCategorySelect = document.getElementById('categoryFilter');
 
+    // Clear existing options
+    [lostCategorySelect, foundCategorySelect, filterCategorySelect].forEach(sel => sel.innerHTML = '');
 
-// Default options
-DOMElements.lostCategorySelect.add(new Option("Select Category", ""));
-DOMElements.foundCategorySelect.add(new Option("Select Category", ""));
-DOMElements.categoryFilter.add(new Option("All Categories", ""));
+    // Add default option
+    lostCategorySelect.add(new Option("Select Category", ""));
+    foundCategorySelect.add(new Option("Select Category", ""));
+    filterCategorySelect.add(new Option("All Categories", ""));
 
+    // Add all categories
+    categories.forEach(category => {
+        lostCategorySelect.add(new Option(category, category));
+        foundCategorySelect.add(new Option(category, category));
+        filterCategorySelect.add(new Option(category, category));
+    });
+}
 
-// Populate categories from the unified list
-categories.forEach(cat => {
-DOMElements.lostCategorySelect.add(new Option(cat, cat));
-DOMElements.foundCategorySelect.add(new Option(cat, cat));
-DOMElements.categoryFilter.add(new Option(cat, cat));
-});
-
-
+// Call this after DOM is ready
+document.addEventListener('DOMContentLoaded', populateCategoryDropdowns);
 // Type filter
 DOMElements.typeFilter.innerHTML = `<option value="">All Types</option><option value="lost">Lost Items</option><option value="found">Found Items</option>`;
 }
@@ -997,6 +1002,7 @@ function renderSuccessStories() {
 }
 
 // --- ENHANCED RENDERING ---
+
 
 
 
