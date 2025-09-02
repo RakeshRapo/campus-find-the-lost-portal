@@ -430,11 +430,17 @@ function createItemCardHTML(item) {
                 <div class="item-detail"><strong>Date Posted:</strong><span>${formatDate(item.datePosted)}</span></div>
                 ${!isLost && item.currentLocation ? `<div class="item-detail"><strong>Currently At:</strong><span>${item.currentLocation}</span></div>` : ''}
             </div>
-            <div class="item-actions">
-                ${isLost && item.status !== 'found' ? `<button class="btn-contact" onclick="openMarkAsFoundModal('${item.id}')">I Found This!</button>` : ''}
-                ${isLost && item.status === 'found' ? `<button class="btn-contact" onclick="contactFinderFromItem('${item.id}')">Contact Finder</button>` : ''}
-                ${!isLost && item.status !== 'claimed' ? `<button class="btn-claim" onclick="openClaimItemModal('${item.id}')">This Belongs to Me!</button>` : ''}
-            </div>
+            // Inside createItemCardHTML function
+// ...
+<div class="item-actions">
+    ${isLost && item.status !== 'found' ? `<button class="btn-contact" onclick="openMarkAsFoundModal('${item.id}')">I Found This!</button>` : ''}
+    ${isLost && item.status === 'found' ? `<button class="btn-contact" onclick="contactFinderFromItem('${item.id}')">Contact Finder</button>` : ''}
+    ${!isLost && item.status !== 'claimed' ? `<button class="btn-claim" onclick="openClaimItemModal('${item.id}')">This Belongs to Me!</button>` : ''}
+    
+    // ADD THIS NEW LINE:
+    ${!isLost && item.status === 'claimed' ? `<button class="btn-reunite" onclick="handleReuniteItem('${item.id}')">Mark as Reunited</button>` : ''}
+</div>
+// ...
             ${isLost && item.status === 'found' && item.finderDetails ? `
             <div class="finder-info-display" style="margin-top: 1rem; padding: 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 10px; border-left: 4px solid #667eea;">
                 <h4 style="margin: 0 0 0.5rem 0; color: #667eea; font-size: 0.9rem;">📞 Finder Information</h4>
@@ -921,4 +927,5 @@ function renderSuccessStories() {
 }
 
 // --- ENHANCED RENDERING ---
+
 
