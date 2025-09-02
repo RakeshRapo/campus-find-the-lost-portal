@@ -436,13 +436,14 @@ function createItemCardHTML(item) {
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
     const isOldUnclaimedFoundItem = item.type === 'found' && !isSuccessfullyFound && new Date(item.datePosted) < threeDaysAgo;
 
-    let badge = '';
-    if (isSuccessfullyFound || item.status === 'found') {
-        badge = '<span class="success-badge">🎉 REUNITED!</span>';
-    } else if (isOldUnclaimedFoundItem) {
-        badge = '<span class="success-badge" style="background: #8e44ad;">CLEARED</span>';
-    }
-
+let badge = '';
+if (isSuccessfullyFound || item.status === 'found') {
+    badge = '<span class="success-badge">🎉 REUNITED!</span>';
+} else if (item.status === 'claimed') { // NEW: Add this condition for claimed items
+    badge = '<span class="status-badge" style="background-color: #f7931e;">⏳ PENDING CLAIM</span>';
+} else if (isOldUnclaimedFoundItem) {
+    badge = '<span class="success-badge" style="background: #8e44ad;">CLEARED</span>';
+}
     return `
         <div class="item-card fade-in ${isSuccessfullyFound ? 'found-success' : ''}">
             <div class="item-header">
@@ -955,6 +956,7 @@ function renderSuccessStories() {
 }
 
 // --- ENHANCED RENDERING ---
+
 
 
 
