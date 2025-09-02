@@ -172,10 +172,13 @@ async function handleLostForm(event) {
  */
 async function handleFoundForm(event) {
     event.preventDefault();
+
+    // The FormData object automatically collects all fields with a 'name' attribute
     const formData = new FormData(event.target);
     const foundItem = Object.fromEntries(formData.entries());
-    foundItem.image = formData.get('image') ? 'sample-image.jpg' : null;
-    // Add type and date posted before sending to backend
+    
+    // Add default properties before sending to backend
+    foundItem.image = foundItem.image ? 'sample-image.jpg' : null;
     foundItem.type = 'found';
     foundItem.datePosted = new Date().toISOString();
 
@@ -183,13 +186,14 @@ async function handleFoundForm(event) {
         const response = await fetch('/api/items/found', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(foundItem),
+            body: JSON.stringify(foundItem), // Sends all form data, including 'contact'
         });
         if (!response.ok) throw new Error('Server responded with an error.');
-        
+
         await loadItemsAndRender(); // Refresh data from backend
         showSuccessModal('Found item posted successfully!');
         event.target.reset();
+        // Reset the date input to the current date after successful submission
         DOMElements.foundDateInput.value = new Date().toISOString().split('T')[0];
     } catch (error) {
         console.error('Error posting found item:', error);
@@ -917,3 +921,4 @@ function renderSuccessStories() {
 }
 
 // --- ENHANCED RENDERING ---
+
